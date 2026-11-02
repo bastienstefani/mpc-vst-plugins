@@ -1,0 +1,42 @@
+{
+  "name": "Philtre",
+  "vendor": "bastienstefani",
+  "uid": "PhlT",
+  "version": 100,
+  "so": "philtre.so",
+  "params": "params.json",
+  "layout": "layout.conf",
+  "art": "html",
+  "tile": "art/tile.png",
+  "presets": "presets.json",
+  "defines": {
+    "HAS_LFO_BPM": 1,
+    "MODULE_SUBDIR": "\"wavetables\""
+  },
+  "targets": [
+    "armv7",
+    "aarch64"
+  ],
+  "build": {
+    "root": "..",
+    "sources": [
+      "src/philtre.c",
+      "src/ph_wt.c",
+      "src/ph_wav.c",
+      "src/ph_fx.c"
+    ],
+    "cflags": [
+      "-Isrc",
+      "-O3",
+      "-fno-math-errno"
+    ],
+    "cflags_arm": [
+      "-mfpu=neon-vfpv4",
+      "-ffp-contract=fast"
+    ],
+    "libs": [
+      "-lm",
+      "-lpthread"
+    ]
+  }
+}

@@ -2131,3 +2131,17 @@ list: `ports/osmium/TESTING.md`. Findings that apply to other ports:
   the browser renderer, where every baked label is Titillium.
 - Not known yet, to check on a Live II: CPU (x86 bench p99 1.5-3.4%, a shared VM), how long the first instance takes to compute
   its 6.5 MB of wavetables, what the data wheel does on a popup field, and whether MPC passes poly aftertouch to a VST2 instrument.
+
+## 2026-11-02: Philtre, a wavetable synth with an effect rack, laid out for 4-knob MPCs (offline only; no device involved)
+
+`ports/philtre` (GPL-3.0-or-later, original code, branch `Serum`): two unison wavetable oscillators with warp modes, user `.wav`
+wavetables loaded on a worker thread (`MODULE_SUBDIR` `wavetables`, released with `--user-data wavetables`), sub, noise, a
+multi-type stereo filter, four envelopes, four LFOs, macros, a 16-slot matrix and an 8-slot effect rack. Status and the device
+list: `ports/philtre/TESTING.md`. Findings that apply to other ports:
+- **A rack slot's knobs follow its effect.** Four generic params per slot carry `"dynamic_name": true` (the engine answers
+  `get_param("<key>_name")` from the slot's type) and the slot's type param `"refresh_display": true`, so MPC re-reads the names
+  when the effect changes. Offline only: the names come back from the wrapper; MPC redrawing them is device check 6.
+- **`tools/bench.sh`'s Q-Link sweep counts the work a parameter call does.** Switching an effect type cleared a 1 MB delay line
+  inside `set_param`, and the sweep's worst block went to 20-24% on x86 (it would be several times that on Gen1). Guarding the
+  long lines with a count of samples written since the switch, instead of clearing them, brought it to 6.5-8%. Keep large
+  `memset`s and allocations out of parameter calls, as PORTING says for file I/O.

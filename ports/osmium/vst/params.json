@@ -1,0 +1,2235 @@
+{
+ "name": "Osmium",
+ "params": [
+  {
+   "key": "vol",
+   "name": "Volume",
+   "min": 0,
+   "max": 100,
+   "default": 70,
+   "dynamic_display": true
+  },
+  {
+   "key": "voices",
+   "name": "Voices",
+   "min": 1,
+   "max": 8,
+   "default": 8,
+   "display": "int",
+   "dynamic_display": true
+  },
+  {
+   "key": "mode",
+   "name": "Mode",
+   "options": [
+    "Poly",
+    "Mono",
+    "Legato"
+   ],
+   "default": 0
+  },
+  {
+   "key": "glide",
+   "name": "Glide",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "bend",
+   "name": "Bend Range",
+   "min": 0,
+   "max": 24,
+   "default": 2,
+   "display": "int",
+   "dynamic_display": true
+  },
+  {
+   "key": "vel",
+   "name": "Velocity",
+   "min": 0,
+   "max": 100,
+   "default": 70,
+   "dynamic_display": true
+  },
+  {
+   "key": "spread",
+   "name": "Spread",
+   "min": 0,
+   "max": 100,
+   "default": 30,
+   "dynamic_display": true
+  },
+  {
+   "key": "o1_wave",
+   "name": "Osc 1 Wave",
+   "options": [
+    "Classic",
+    "PWM",
+    "Harmonics",
+    "Vowel",
+    "Sync",
+    "FM",
+    "Fold",
+    "Organ",
+    "Digital",
+    "Reso",
+    "Comb",
+    "Random",
+    "VA Saw",
+    "VA Square",
+    "VA Tri",
+    "VA Sine"
+   ],
+   "default": 0
+  },
+  {
+   "key": "o1_shape",
+   "name": "Osc 1 Shape",
+   "min": 0,
+   "max": 100,
+   "default": 40,
+   "dynamic_display": true
+  },
+  {
+   "key": "o1_oct",
+   "name": "Osc 1 Octave",
+   "min": -3,
+   "max": 3,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true
+  },
+  {
+   "key": "o1_semi",
+   "name": "Osc 1 Semi",
+   "min": -12,
+   "max": 12,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true
+  },
+  {
+   "key": "o1_fine",
+   "name": "Osc 1 Fine",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true
+  },
+  {
+   "key": "o1_level",
+   "name": "Osc 1 Level",
+   "min": 0,
+   "max": 100,
+   "default": 80,
+   "dynamic_display": true
+  },
+  {
+   "key": "o2_wave",
+   "name": "Osc 2 Wave",
+   "options": [
+    "Classic",
+    "PWM",
+    "Harmonics",
+    "Vowel",
+    "Sync",
+    "FM",
+    "Fold",
+    "Organ",
+    "Digital",
+    "Reso",
+    "Comb",
+    "Random",
+    "VA Saw",
+    "VA Square",
+    "VA Tri",
+    "VA Sine"
+   ],
+   "default": 12
+  },
+  {
+   "key": "o2_shape",
+   "name": "Osc 2 Shape",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "o2_oct",
+   "name": "Osc 2 Octave",
+   "min": -3,
+   "max": 3,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true
+  },
+  {
+   "key": "o2_semi",
+   "name": "Osc 2 Semi",
+   "min": -12,
+   "max": 12,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true
+  },
+  {
+   "key": "o2_fine",
+   "name": "Osc 2 Fine",
+   "min": -100,
+   "max": 100,
+   "default": 7,
+   "display": "int",
+   "dynamic_display": true
+  },
+  {
+   "key": "o2_level",
+   "name": "Osc 2 Level",
+   "min": 0,
+   "max": 100,
+   "default": 60,
+   "dynamic_display": true
+  },
+  {
+   "key": "o3_wave",
+   "name": "Osc 3 Wave",
+   "options": [
+    "Classic",
+    "PWM",
+    "Harmonics",
+    "Vowel",
+    "Sync",
+    "FM",
+    "Fold",
+    "Organ",
+    "Digital",
+    "Reso",
+    "Comb",
+    "Random",
+    "VA Saw",
+    "VA Square",
+    "VA Tri",
+    "VA Sine"
+   ],
+   "default": 3
+  },
+  {
+   "key": "o3_shape",
+   "name": "Osc 3 Shape",
+   "min": 0,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "o3_oct",
+   "name": "Osc 3 Octave",
+   "min": -3,
+   "max": 3,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true
+  },
+  {
+   "key": "o3_semi",
+   "name": "Osc 3 Semi",
+   "min": -12,
+   "max": 12,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true
+  },
+  {
+   "key": "o3_fine",
+   "name": "Osc 3 Fine",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true
+  },
+  {
+   "key": "o3_level",
+   "name": "Osc 3 Level",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "noise",
+   "name": "Noise",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "noise_color",
+   "name": "Noise Color",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "f1_type",
+   "name": "Filter 1 Type",
+   "options": [
+    "Off",
+    "LP 24",
+    "LP 12",
+    "BP",
+    "HP 12",
+    "HP 24",
+    "Notch"
+   ],
+   "default": 1
+  },
+  {
+   "key": "f1_cut",
+   "name": "F1 Cutoff",
+   "min": 0,
+   "max": 100,
+   "default": 62,
+   "dynamic_display": true
+  },
+  {
+   "key": "f1_res",
+   "name": "F1 Resonance",
+   "min": 0,
+   "max": 100,
+   "default": 15,
+   "dynamic_display": true
+  },
+  {
+   "key": "f1_drive",
+   "name": "F1 Drive",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "f1_env",
+   "name": "F1 Env Amt",
+   "min": -100,
+   "max": 100,
+   "default": 35,
+   "dynamic_display": true
+  },
+  {
+   "key": "f1_key",
+   "name": "F1 Key Track",
+   "min": 0,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "f2_type",
+   "name": "Filter 2 Type",
+   "options": [
+    "Off",
+    "LP 24",
+    "LP 12",
+    "BP",
+    "HP 12",
+    "HP 24",
+    "Notch"
+   ],
+   "default": 0
+  },
+  {
+   "key": "f2_cut",
+   "name": "F2 Cutoff",
+   "min": 0,
+   "max": 100,
+   "default": 100,
+   "dynamic_display": true
+  },
+  {
+   "key": "f2_res",
+   "name": "F2 Resonance",
+   "min": 0,
+   "max": 100,
+   "default": 15,
+   "dynamic_display": true
+  },
+  {
+   "key": "f2_drive",
+   "name": "F2 Drive",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "f2_env",
+   "name": "F2 Env Amt",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "f2_key",
+   "name": "F2 Key Track",
+   "min": 0,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "f_route",
+   "name": "Filter Routing",
+   "options": [
+    "Serial",
+    "Parallel"
+   ],
+   "default": 0
+  },
+  {
+   "key": "f_bal",
+   "name": "F Balance",
+   "min": 0,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "e1_a",
+   "name": "Amp Attack",
+   "min": 0,
+   "max": 100,
+   "default": 2,
+   "dynamic_display": true
+  },
+  {
+   "key": "e1_d",
+   "name": "Amp Decay",
+   "min": 0,
+   "max": 100,
+   "default": 40,
+   "dynamic_display": true
+  },
+  {
+   "key": "e1_s",
+   "name": "Amp Sustain",
+   "min": 0,
+   "max": 100,
+   "default": 80,
+   "dynamic_display": true
+  },
+  {
+   "key": "e1_r",
+   "name": "Amp Release",
+   "min": 0,
+   "max": 100,
+   "default": 35,
+   "dynamic_display": true
+  },
+  {
+   "key": "e2_a",
+   "name": "Filt Attack",
+   "min": 0,
+   "max": 100,
+   "default": 5,
+   "dynamic_display": true
+  },
+  {
+   "key": "e2_d",
+   "name": "Filt Decay",
+   "min": 0,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "e2_s",
+   "name": "Filt Sustain",
+   "min": 0,
+   "max": 100,
+   "default": 30,
+   "dynamic_display": true
+  },
+  {
+   "key": "e2_r",
+   "name": "Filt Release",
+   "min": 0,
+   "max": 100,
+   "default": 40,
+   "dynamic_display": true
+  },
+  {
+   "key": "e3_a",
+   "name": "Env3 Attack",
+   "min": 0,
+   "max": 100,
+   "default": 30,
+   "dynamic_display": true
+  },
+  {
+   "key": "e3_d",
+   "name": "Env3 Decay",
+   "min": 0,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "e3_s",
+   "name": "Env3 Sustain",
+   "min": 0,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "e3_r",
+   "name": "Env3 Release",
+   "min": 0,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "l1_shape",
+   "name": "LFO1 Shape",
+   "options": [
+    "Sine",
+    "Triangle",
+    "Saw Up",
+    "Saw Down",
+    "Square",
+    "S&H",
+    "Smooth"
+   ],
+   "default": 0
+  },
+  {
+   "key": "l1_rate",
+   "name": "LFO1 Rate",
+   "min": 0,
+   "max": 100,
+   "default": 74,
+   "dynamic_display": true
+  },
+  {
+   "key": "l1_sync",
+   "name": "LFO1 Sync",
+   "options": [
+    "Off",
+    "4/1",
+    "2/1",
+    "1/1",
+    "1/2",
+    "1/2T",
+    "1/4",
+    "1/4T",
+    "1/8",
+    "1/8T",
+    "1/16",
+    "1/16T",
+    "1/32"
+   ],
+   "default": 0
+  },
+  {
+   "key": "l1_retrig",
+   "name": "LFO1 Retrig",
+   "options": [
+    "Free",
+    "Key"
+   ],
+   "default": 0
+  },
+  {
+   "key": "l1_fade",
+   "name": "LFO1 Fade In",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "l2_shape",
+   "name": "LFO2 Shape",
+   "options": [
+    "Sine",
+    "Triangle",
+    "Saw Up",
+    "Saw Down",
+    "Square",
+    "S&H",
+    "Smooth"
+   ],
+   "default": 0
+  },
+  {
+   "key": "l2_rate",
+   "name": "LFO2 Rate",
+   "min": 0,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "l2_sync",
+   "name": "LFO2 Sync",
+   "options": [
+    "Off",
+    "4/1",
+    "2/1",
+    "1/1",
+    "1/2",
+    "1/2T",
+    "1/4",
+    "1/4T",
+    "1/8",
+    "1/8T",
+    "1/16",
+    "1/16T",
+    "1/32"
+   ],
+   "default": 0
+  },
+  {
+   "key": "l2_retrig",
+   "name": "LFO2 Retrig",
+   "options": [
+    "Free",
+    "Key"
+   ],
+   "default": 0
+  },
+  {
+   "key": "l2_fade",
+   "name": "LFO2 Fade In",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "l3_shape",
+   "name": "LFO3 Shape",
+   "options": [
+    "Sine",
+    "Triangle",
+    "Saw Up",
+    "Saw Down",
+    "Square",
+    "S&H",
+    "Smooth"
+   ],
+   "default": 0
+  },
+  {
+   "key": "l3_rate",
+   "name": "LFO3 Rate",
+   "min": 0,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "l3_sync",
+   "name": "LFO3 Sync",
+   "options": [
+    "Off",
+    "4/1",
+    "2/1",
+    "1/1",
+    "1/2",
+    "1/2T",
+    "1/4",
+    "1/4T",
+    "1/8",
+    "1/8T",
+    "1/16",
+    "1/16T",
+    "1/32"
+   ],
+   "default": 0
+  },
+  {
+   "key": "l3_retrig",
+   "name": "LFO3 Retrig",
+   "options": [
+    "Free",
+    "Key"
+   ],
+   "default": 0
+  },
+  {
+   "key": "l3_fade",
+   "name": "LFO3 Fade In",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m1_src",
+   "name": "Mod 1 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 4
+  },
+  {
+   "key": "m1_via",
+   "name": "Mod 1 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 9
+  },
+  {
+   "key": "m1_dst",
+   "name": "Mod 1 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 1
+  },
+  {
+   "key": "m1_amt",
+   "name": "Mod 1 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 3,
+   "dynamic_display": true
+  },
+  {
+   "key": "m2_src",
+   "name": "Mod 2 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 7
+  },
+  {
+   "key": "m2_via",
+   "name": "Mod 2 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m2_dst",
+   "name": "Mod 2 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 12
+  },
+  {
+   "key": "m2_amt",
+   "name": "Mod 2 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 10,
+   "dynamic_display": true
+  },
+  {
+   "key": "m3_src",
+   "name": "Mod 3 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m3_via",
+   "name": "Mod 3 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m3_dst",
+   "name": "Mod 3 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m3_amt",
+   "name": "Mod 3 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m4_src",
+   "name": "Mod 4 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m4_via",
+   "name": "Mod 4 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m4_dst",
+   "name": "Mod 4 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m4_amt",
+   "name": "Mod 4 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m5_src",
+   "name": "Mod 5 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m5_via",
+   "name": "Mod 5 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m5_dst",
+   "name": "Mod 5 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m5_amt",
+   "name": "Mod 5 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m6_src",
+   "name": "Mod 6 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m6_via",
+   "name": "Mod 6 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m6_dst",
+   "name": "Mod 6 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m6_amt",
+   "name": "Mod 6 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m7_src",
+   "name": "Mod 7 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m7_via",
+   "name": "Mod 7 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m7_dst",
+   "name": "Mod 7 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m7_amt",
+   "name": "Mod 7 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m8_src",
+   "name": "Mod 8 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m8_via",
+   "name": "Mod 8 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m8_dst",
+   "name": "Mod 8 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m8_amt",
+   "name": "Mod 8 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m9_src",
+   "name": "Mod 9 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m9_via",
+   "name": "Mod 9 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m9_dst",
+   "name": "Mod 9 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m9_amt",
+   "name": "Mod 9 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m10_src",
+   "name": "Mod 10 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m10_via",
+   "name": "Mod 10 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m10_dst",
+   "name": "Mod 10 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m10_amt",
+   "name": "Mod 10 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m11_src",
+   "name": "Mod 11 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m11_via",
+   "name": "Mod 11 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m11_dst",
+   "name": "Mod 11 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m11_amt",
+   "name": "Mod 11 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m12_src",
+   "name": "Mod 12 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m12_via",
+   "name": "Mod 12 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m12_dst",
+   "name": "Mod 12 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m12_amt",
+   "name": "Mod 12 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m13_src",
+   "name": "Mod 13 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m13_via",
+   "name": "Mod 13 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m13_dst",
+   "name": "Mod 13 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m13_amt",
+   "name": "Mod 13 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m14_src",
+   "name": "Mod 14 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m14_via",
+   "name": "Mod 14 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m14_dst",
+   "name": "Mod 14 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m14_amt",
+   "name": "Mod 14 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m15_src",
+   "name": "Mod 15 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m15_via",
+   "name": "Mod 15 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m15_dst",
+   "name": "Mod 15 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m15_amt",
+   "name": "Mod 15 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "m16_src",
+   "name": "Mod 16 Source",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m16_via",
+   "name": "Mod 16 Via",
+   "options": [
+    "Off",
+    "Amp Env",
+    "Filt Env",
+    "Env 3",
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "Velocity",
+    "Key",
+    "Mod Whl",
+    "Pressure",
+    "Bend",
+    "Random",
+    "Expr"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m16_dst",
+   "name": "Mod 16 Dest",
+   "options": [
+    "Off",
+    "Pitch",
+    "O1 Pitch",
+    "O2 Pitch",
+    "O3 Pitch",
+    "O1 Shape",
+    "O2 Shape",
+    "O3 Shape",
+    "O1 Level",
+    "O2 Level",
+    "O3 Level",
+    "Noise",
+    "Cutoff",
+    "F1 Cutoff",
+    "F2 Cutoff",
+    "F1 Reso",
+    "F2 Reso",
+    "F Balance",
+    "Amp",
+    "Pan",
+    "LFO1 Rate",
+    "LFO2 Rate",
+    "LFO3 Rate"
+   ],
+   "default": 0
+  },
+  {
+   "key": "m16_amt",
+   "name": "Mod 16 Amount",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "ch_mix",
+   "name": "Chorus Mix",
+   "min": 0,
+   "max": 100,
+   "default": 30,
+   "dynamic_display": true
+  },
+  {
+   "key": "ch_rate",
+   "name": "Chorus Rate",
+   "min": 0,
+   "max": 100,
+   "default": 30,
+   "dynamic_display": true
+  },
+  {
+   "key": "ch_depth",
+   "name": "Chorus Depth",
+   "min": 0,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "dl_mix",
+   "name": "Delay Mix",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "dl_time",
+   "name": "Delay Time",
+   "min": 0,
+   "max": 100,
+   "default": 60,
+   "dynamic_display": true
+  },
+  {
+   "key": "dl_sync",
+   "name": "Delay Sync",
+   "options": [
+    "Off",
+    "1/32",
+    "1/16T",
+    "1/16",
+    "1/16D",
+    "1/8T",
+    "1/8",
+    "1/8D",
+    "1/4T",
+    "1/4",
+    "1/4D",
+    "1/2",
+    "1/1"
+   ],
+   "default": 7
+  },
+  {
+   "key": "dl_fb",
+   "name": "Delay Feedback",
+   "min": 0,
+   "max": 100,
+   "default": 35,
+   "dynamic_display": true
+  },
+  {
+   "key": "dl_tone",
+   "name": "Delay Tone",
+   "min": 0,
+   "max": 100,
+   "default": 60,
+   "dynamic_display": true
+  },
+  {
+   "key": "dl_mode",
+   "name": "Delay Mode",
+   "options": [
+    "Stereo",
+    "Ping Pong"
+   ],
+   "default": 1
+  }
+ ],
+ "sections": [
+  {
+   "label": "Voice",
+   "keys": [
+    "vol",
+    "voices",
+    "mode",
+    "glide",
+    "bend",
+    "vel",
+    "spread"
+   ]
+  },
+  {
+   "label": "Osc 1",
+   "keys": [
+    "o1_wave",
+    "o1_shape",
+    "o1_oct",
+    "o1_semi",
+    "o1_fine",
+    "o1_level"
+   ]
+  },
+  {
+   "label": "Osc 2",
+   "keys": [
+    "o2_wave",
+    "o2_shape",
+    "o2_oct",
+    "o2_semi",
+    "o2_fine",
+    "o2_level"
+   ]
+  },
+  {
+   "label": "Osc 3",
+   "keys": [
+    "o3_wave",
+    "o3_shape",
+    "o3_oct",
+    "o3_semi",
+    "o3_fine",
+    "o3_level"
+   ]
+  },
+  {
+   "label": "Noise",
+   "keys": [
+    "noise",
+    "noise_color"
+   ]
+  },
+  {
+   "label": "Filters",
+   "keys": [
+    "f1_type",
+    "f1_cut",
+    "f1_res",
+    "f1_drive",
+    "f1_env",
+    "f1_key",
+    "f2_type",
+    "f2_cut",
+    "f2_res",
+    "f2_drive",
+    "f2_env",
+    "f2_key",
+    "f_route",
+    "f_bal"
+   ]
+  },
+  {
+   "label": "Envelopes",
+   "keys": [
+    "e1_a",
+    "e1_d",
+    "e1_s",
+    "e1_r",
+    "e2_a",
+    "e2_d",
+    "e2_s",
+    "e2_r",
+    "e3_a",
+    "e3_d",
+    "e3_s",
+    "e3_r"
+   ]
+  },
+  {
+   "label": "LFOs",
+   "keys": [
+    "l1_shape",
+    "l1_rate",
+    "l1_sync",
+    "l1_retrig",
+    "l1_fade",
+    "l2_shape",
+    "l2_rate",
+    "l2_sync",
+    "l2_retrig",
+    "l2_fade",
+    "l3_shape",
+    "l3_rate",
+    "l3_sync",
+    "l3_retrig",
+    "l3_fade"
+   ]
+  },
+  {
+   "label": "Mod",
+   "keys": [
+    "m1_src",
+    "m1_via",
+    "m1_dst",
+    "m1_amt",
+    "m2_src",
+    "m2_via",
+    "m2_dst",
+    "m2_amt",
+    "m3_src",
+    "m3_via",
+    "m3_dst",
+    "m3_amt",
+    "m4_src",
+    "m4_via",
+    "m4_dst",
+    "m4_amt",
+    "m5_src",
+    "m5_via",
+    "m5_dst",
+    "m5_amt",
+    "m6_src",
+    "m6_via",
+    "m6_dst",
+    "m6_amt",
+    "m7_src",
+    "m7_via",
+    "m7_dst",
+    "m7_amt",
+    "m8_src",
+    "m8_via",
+    "m8_dst",
+    "m8_amt",
+    "m9_src",
+    "m9_via",
+    "m9_dst",
+    "m9_amt",
+    "m10_src",
+    "m10_via",
+    "m10_dst",
+    "m10_amt",
+    "m11_src",
+    "m11_via",
+    "m11_dst",
+    "m11_amt",
+    "m12_src",
+    "m12_via",
+    "m12_dst",
+    "m12_amt",
+    "m13_src",
+    "m13_via",
+    "m13_dst",
+    "m13_amt",
+    "m14_src",
+    "m14_via",
+    "m14_dst",
+    "m14_amt",
+    "m15_src",
+    "m15_via",
+    "m15_dst",
+    "m15_amt",
+    "m16_src",
+    "m16_via",
+    "m16_dst",
+    "m16_amt"
+   ]
+  },
+  {
+   "label": "FX",
+   "keys": [
+    "ch_mix",
+    "ch_rate",
+    "ch_depth",
+    "dl_mix",
+    "dl_time",
+    "dl_sync",
+    "dl_fb",
+    "dl_tone",
+    "dl_mode"
+   ]
+  }
+ ]
+}

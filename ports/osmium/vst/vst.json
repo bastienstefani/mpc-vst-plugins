@@ -1,0 +1,39 @@
+{
+  "name": "Osmium",
+  "vendor": "bastienstefani",
+  "uid": "OsmM",
+  "version": 100,
+  "so": "osmium.so",
+  "params": "params.json",
+  "layout": "layout.conf",
+  "art": "html",
+  "tile": "art/tile.png",
+  "presets": "presets.json",
+  "defines": {
+    "HAS_LFO_BPM": 1
+  },
+  "targets": [
+    "armv7",
+    "aarch64"
+  ],
+  "build": {
+    "root": "..",
+    "sources": [
+      "src/osmium.c",
+      "src/osm_wt.c"
+    ],
+    "cflags": [
+      "-Isrc",
+      "-O3",
+      "-fno-math-errno"
+    ],
+    "cflags_arm": [
+      "-mfpu=neon-vfpv4",
+      "-ffp-contract=fast"
+    ],
+    "libs": [
+      "-lm",
+      "-lpthread"
+    ]
+  }
+}

@@ -1,0 +1,53 @@
+# Osmium (ports/osmium): on a push that changes the port, build it (host test, armv7 + aarch64, skin) and attach both zips to a
+# DRAFT release osmium-v<version> with vst-release.yml, the version taken from ports/osmium/vst/vst.json. A draft is only visible
+# to the repo's maintainers and makes no tag; publish it after a device smoke test (docs/RELEASING.md), which creates the tag.
+name: Osmium release
+on:
+  push:
+    branches: [iridum, main]
+    paths: ['ports/osmium/**', '.github/workflows/osmium-release.yml']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and package only (the zips as run artifacts), no draft release
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: osmium-release
+  cancel-in-progress: true
+jobs:
+  meta:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: v
+        # vst.json "version" is major*1000 + minor*100 + patch*10 + build (docs/PORTING.md): 100 -> 0.1.0
+        run: |
+          python3 - >> "$GITHUB_OUTPUT" <<'PY'
+          import json
+          v = json.load(open("ports/osmium/vst/vst.json"))["version"]
+          print("version=%d.%d.%d" % (v // 1000, v // 100 % 10, v // 10 % 10))
+          PY
+  release:
+    needs: meta
+    permissions:
+      contents: write
+    uses: ./.github/workflows/vst-release.yml
+    with:
+      tag: osmium-v${{ needs.meta.outputs.version }}
+      version: ${{ needs.meta.outputs.version }}
+      # the tools are checked out from open-mpc/mpc-vst-plugins at this commit (its main merged into iridum; ports/osmium
+      # changes no tool), while the port itself builds from this repo's own checkout
+      tools_ref: 35257c5cfab2d5b8a2ef3f75a98fe1cb00b669d5
+      vst_dir: ports/osmium/vst
+      build: ports/osmium/build.sh
+      about: Eight-voice wavetable and VA synth for 4-knob MPCs (Live II, One, Key 37) with three oscillators, two filters, three envelopes, three LFOs, a 16-slot mod matrix, chorus and delay. Not yet tested on a device.
+      plugin_id: osmium
+      license: GPL-3.0-or-later
+      dry_run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}

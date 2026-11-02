@@ -90,6 +90,12 @@ tools/release.py --so $B/aarch64/osmium.so ... (same arguments)
 tools/catalog_check.py dist/Osmium-0.1.0-mpc-armv7.zip --catalog
 ```
 
+From CI: `.github/workflows/osmium-release.yml` runs on every push that changes `ports/osmium/` (branches `iridum` and
+`main`). It calls `vst-release.yml`, which builds both zips and attaches them to a **draft** release `osmium-v<version>`
+(the version from `vst/vst.json`), replacing the zips of an earlier draft. A draft is only visible to the repo's
+maintainers and makes no tag: publish it after the device checks in `TESTING.md`, and bump the version after that.
+A committed `vst/bench.txt` (the `-j` line of `tools/bench.sh`) adds the CPU result to `INSTALL.md`.
+
 ## Not in this version
 - The sample-based (granular), resonator and FM-operator oscillator modes, a Komplex-style modulator, an arpeggiator,
   user wavetables (WAV files), unison and a reverb.

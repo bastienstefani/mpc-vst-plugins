@@ -2116,3 +2116,18 @@ Fixes (offline-tested; not yet on a device): the manager's keys get the same 250
 Offline only: `VST3_TARGET=windows` in `tools/build_vst3.sh` and `tools/test_vst3.sh` cross-builds the wrapper with mingw-w64
 and runs the host test under Wine 11 (passes for `poc/uiprobe`). Not tried on real Windows or in a DAW; no editor on Windows;
 the Maschine engine does not compile (`dlfcn.h`). Details: docs/DESKTOP_VST3.md, "Windows".
+
+## 2026-11-02: Osmium, an 8-voice wavetable/VA synth laid out for 4-knob MPCs (offline only; no device involved)
+
+`ports/osmium` (GPL-3.0-or-later, original code): three oscillators per voice (twelve wavetables computed at load, plus four
+band-limited classic waves), noise, two state-variable filters, three envelopes, three LFOs, a 16-slot matrix, chorus and delay;
+seven tabs where each Q-Link column is one frame of four stacked controls for a Live II's four knobs. Status and the device test
+list: `ports/osmium/TESTING.md`. Findings that apply to other ports:
+- **`skin_check` TOUCH and popups:** every option of an open popup list is reported against each control under it (472
+  lines for this skin, which has 60 popups). Filtering those out left no overlap, so the real findings were none; a
+  popup-heavy page buries real ones in that noise.
+- **`font_label=` path:** shadow_art opens it relative to the working directory of the build, which is the port root
+  (vst.json `"root"`), not the folder of the layout as the comment in `render_conf_preview.c` says. The port then switched to
+  the browser renderer, where every baked label is Titillium.
+- Not known yet, to check on a Live II: CPU (x86 bench p99 1.5-3.4%, a shared VM), how long the first instance takes to compute
+  its 6.5 MB of wavetables, what the data wheel does on a popup field, and whether MPC passes poly aftertouch to a VST2 instrument.

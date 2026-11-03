@@ -31,7 +31,7 @@ static float level(void *s, int b0, int b1) {
     int16_t out[256]; float pk = 0;
     for (int b = 0; b < b1; b++) {
         E->render(s, out, 128);
-        if (b >= b0) for (int i = 0; i < 256; i += 2) if (fabsf(out[i]) > pk) pk = fabsf(out[i]);
+        if (b >= b0) for (int i = 0; i < 256; i += 2) if (fabsf((float)out[i]) > pk) pk = fabsf((float)out[i]);
     }
     uint8_t m[3] = {0xB0, 120, 0};
     E->midi(s, m, 3);

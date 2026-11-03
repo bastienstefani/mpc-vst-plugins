@@ -154,7 +154,7 @@ def main():
     t2["Env1"]["plainParams"].update({"kParamAttack": 0.0, "kParamDecay": 0.2, "kParamSustain": 0.0})
     t2["LFO2"] = {"curveData": {"xVals": [0.0, 0.25, 0.25, 1.0], "yVals": [0.0, 0.0, 1.0, 1.0],
                                 "curveVals": [0.5, 0.9, 0.5, 0.5], "numPoints": 3},
-                  "plainParams": {"kParamMode": "Free", "kParamRate": 0.75}}
+                  "plainParams": {"kParamMode": "Free", "kParamRate": 10.66}}
     t2["Macro0"] = {"name": "CUT", "plainParams": {"kParamValue": 40.0}}
     t2["ModSlot0"] = {"source": [8, 0], "destModuleTypeString": "VoiceFilter", "destModuleID": 0,
                       "destModuleParamName": "kParamFreq", "plainParams": {"kParamAmount": 50.0}}
@@ -188,6 +188,8 @@ def main():
     t3["ModSlot6"] = {"source": [1, 0], "destModuleTypeString": "Env", "destModuleID": 0,
                       "destModuleParamName": "kParamAttack", "plainParams": {"kParamAmount": 10.0}}
     t3["Macro2"] = {"name": "WIDE", "plainParams": {"kParamValue": 70.0}}
+    t3["LFO1"]["plainParams"] = {"kParamBeatSync": 0.0, "kParamRate": 1.0068}
+    t3["LFO2"]["plainParams"] = {"kParamRate": 1.627}
 
     files = {"init.SerumPreset": preset_bytes(t1, "Init Test"), "full.SerumPreset": preset_bytes(t2, "Full / Test"),
              "sub/three.SerumPreset": preset_bytes(t3, "Three Osc"),
@@ -246,7 +248,7 @@ def main():
     check(v2["e2_s"] == "0" and near(v2["e2_a"], 0), "Env 2: zero attack and sustain")
     # LFO 3 (source 8) is the first used: Philtre LFO 1, Free, its points (step at 0.25), unipolar -> offset
     check(o("l1_shape") == "Custom" and o("l1_mode") == "Free" and o("l1_sync") == "1/8",
-          "Serum LFO 3 -> Philtre LFO 1: points, Free, rate 0.75 -> 1/8 (%s)" % o("l1_sync"))
+          "Serum LFO 3 -> Philtre LFO 1: points, Free, rate 10.66 -> 1/8 (%s)" % o("l1_sync"))
     pts = [tuple(float(x) for x in p.split(",")) for p in v2["l1_pts"].split("/")]
     check(len(pts) == 4 and pts[0][:2] == (0.0, 1.0) and abs(pts[1][0] - 0.25) < 1e-6 and pts[2][1] == -1.0
           and 0.25 < pts[2][0] < 0.26 and abs(pts[1][2] - 0.8) < 1e-6 and pts[3][:2] == (0.998, -1.0),
@@ -279,6 +281,9 @@ def main():
           "LFO 5 (Philtre has four LFOs)" in report, "four LFOs kept, the fifth reported")
     check(o3("m1_dst") == "A Pos", "Serum B's position follows it to Philtre's A")
     check(len(v3["l1_pts"].split("/")) == 16, "31 LFO points -> 16")
+    check(o3("l2_sync") == "Off" and near(v3["l2_rate"], si.lrate_x(1.0068), 0.01) and o3("l3_sync") == "1/1"
+          and o3("l4_sync") == "1/4", "LFO rates: free 1 Hz stays 1 Hz, 1.627 synced is 1 bar, the default is 1/4 (%s %s %s)"
+          % (v3["l2_rate"], o3("l3_sync"), o3("l4_sync")))
     check("source #25 not known" in report and "no such destination" in report, "unknown source and Env destination reported")
     check("macro 3 (WIDE)" in report, "macro 3 reported")
 

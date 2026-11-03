@@ -198,7 +198,12 @@ FREQ_LO, FREQ_HI = 8.1758, 22050.0   # [m] filter cutoff: stored 0..1 = FREQ_LO 
 CUTOFF_RANGE_SEMIS = 12 * math.log2(FREQ_HI / FREQ_LO)   # 137 semitones: a 100 % cutoff modulation in Serum
 CUTOFF_X_SEMIS = 12 * math.log2(1000)                    # Philtre's cutoff knob spans 120 semitones
 PITCH_RANGE_SEMIS = 24.0           # [g] a 100 % pitch modulation of an oscillator
-LFO_RATE_DEF = 0.625               # [s] the Init LFO is synced at 1/4; [g] the stored 0..1, beats = 32 * 2^(-8 n)
+# LFO rate [f] (Serum 2.0.16 presets saved by the user, 2026-11-03): stored in Hz when free (1.0 Hz -> 1.0068); when
+# synced the same knob value picks the division: 1/8 -> 10.66, 1 bar -> 1.627, so beats ~ LFO_SYNC_K / stored (a fit on
+# two points; the knob snaps, so each division covers a range). [s] the Init LFO is synced at 1/4: the default is put
+# where that fit gives 1/4 [g] (Serum's own default number is not known yet).
+LFO_SYNC_K = 6.0
+LFO_RATE_DEF = LFO_SYNC_K / 1.0
 
 
 def serum_hz(n):
@@ -648,7 +653,7 @@ class Converter:
         ph.set(k + "mode", "Free" if mode.startswith("free") else "Env" if mode.startswith("env") else "Retrig")   # [s]
         rate = num(q, "kParamRate", LFO_RATE_DEF)
         if num(q, "kParamBeatSync", 1) >= 0.5:
-            beats = 32 * 2 ** (-8 * rate)                                                    # [g]
+            beats = LFO_SYNC_K / max(rate, 1e-3)                                            # [f] fit
             if num(q, "kParamTriplets", 0) >= 0.5:
                 beats *= 2 / 3
             if num(q, "kParamDotted", 0) >= 0.5:
@@ -656,11 +661,14 @@ class Converter:
             best = min(range(1, len(LSYNC_BEATS)), key=lambda i: abs(math.log2(LSYNC_BEATS[i] / beats)))
             ph.set(k + "sync", best)
             if "kParamRate" in q:
-                ph.approx("LFO %d: synced rate -> %s [g]" % (l + 1, mp.LSYNC[best]))
+                ph.approx("LFO %d: synced rate -> %s (fitted on two Serum divisions)" % (l + 1, mp.LSYNC[best]))
         else:
             ph.set(k + "sync", "Off")
-            ph.set(k + "rate", rate * 100)
-            ph.approx("LFO %d: free rate unit [g]" % (l + 1))
+            ph.set(k + "rate", lrate_x(rate))                                                # [f] Hz
+            if rate > 40 or rate < 0.02:
+                ph.approx("LFO %d: %.3g Hz -> Philtre's 0.02-40 Hz" % (l + 1, rate))
+            if "kParamRate" not in q:
+                ph.approx("LFO %d: free rate left at Serum's default, which is not known [g]" % (l + 1))
         for key in q:
             if "rise" in key.lower() or ("delay" in key.lower() and num(q, key, 0) > 0):
                 ph.drop("LFO %d: rise / delay" % (l + 1))
@@ -976,7 +984,11 @@ def main(argv):
         sys.exit(__doc__)
     if dump:
         for f in presets_in(args):
-            meta, tree = read_preset(f)
+            try:
+                meta, tree = read_preset(f)
+            except (OSError, PresetError) as e:
+                print("==", f, "not read:", e)
+                continue
             print("==", f, json.dumps(meta)[:300])
             for k, v in flatten(tree):
                 if isinstance(v, bytes):

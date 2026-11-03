@@ -1275,8 +1275,12 @@ static void state_set(ph_t *s, const char *str) {
     }
     for (int o = 0; o < 2; o++)   /* a user table comes back by its file name; positions shift when files are added */
         if (s->pend_name[o][0]) {
-            int f = lib_find(s->lib, s->pend_name[o]);   /* not found (moved, deleted): the first built-in table */
-            set_value(s, o ? P_B_TABLE : P_A_TABLE, f >= 0 ? (float)(WT_NB + f) : 0);
+            int f = lib_find(s->lib, s->pend_name[o]), t = o ? P_B_TABLE : P_A_TABLE;
+            /* not found (moved, deleted, not copied yet): the built-in table the state names (an imported preset's
+             * stand-in; read from the text, as a user index was clamped to the files there are), else the first one */
+            const char *w = strstr(str, o ? ";b_table=" : ";a_table=");
+            float named = w ? strtof(w + 9, NULL) : 0;
+            set_value(s, t, f >= 0 ? (float)(WT_NB + f) : named >= 0 && named < WT_NB ? floorf(named) : 0);
         }
 }
 

@@ -5,7 +5,7 @@ II's screen, its four Q-Link knobs and its data wheel. Original code (GPL-3.0-or
 Xfer Records: no Serum code, presets, wavetables or artwork. The built-in wavetables are computed when the plugin loads,
 the presets are original, and you can load your own `.wav` wavetables.
 
-Status: **MVP, offline only** (2026-11-02). It builds for Gen1 (armv7) and Gen2 (aarch64) and passes the host tests and a
+Status: **0.2.0, offline only** (2026-11-03; envelope curves and the LFO and envelope shape editors are new in 0.2.0). It builds for Gen1 (armv7) and Gen2 (aarch64) and passes the host tests and a
 sanitizer stress run; nothing has run on a device yet. See `TESTING.md`.
 
 ## Sound engine
@@ -20,9 +20,12 @@ Per voice (8 voices, poly, mono or legato, glide, bend range, velocity):
 - **Filter**, stereo: LP 12/24, MG LP 12/24 (saturated transistor ladder), HP 12/24, BP 12, Notch, Comb +/-, Phaser,
   Formant (the cutoff sweeps the vowels); cutoff, resonance, drive, key tracking, an Env 2 amount and a dry/wet mix. Each
   source (A, B, noise, sub) is routed through it or around it.
-- **Envelopes:** four ADSR (Env 1 is the amp). **LFOs:** four, ten shapes (sine, triangle, saw up/down, square, S&H,
-  smooth, pump, exponential rise, stairs), free-running, retriggered per note or one-shot (Env mode), 0.02-40 Hz or synced
-  to the MPC tempo, with rise (fade-in) and start phase. **Macros:** four knobs, as modulation sources.
+- **Envelopes:** four, attack-hold-decay-sustain-release (Env 1 is the amp), with a curve on the attack, the decay and
+  the release (+: fast then slow, -: slow then fast, 0: straight) and a hold (0 = none).
+- **LFOs:** four, ten shapes (sine, triangle, saw up/down, square, S&H, smooth, pump, exponential rise, stairs) or
+  **Custom**: 2 to 16 points round the cycle, each with a level and a curve to the next point. Free-running, retriggered
+  per note or one-shot (Env mode), 0.02-40 Hz or synced to the MPC tempo, with rise (fade-in) and start phase.
+- **Macros:** four knobs, as modulation sources.
 - **Modulation matrix:** 16 slots of `Source x Aux x Amount -> Destination`. Sources: Env 1-4, LFO 1-4 (-1..1), Velocity,
   Note, Mod Whl, Aftertouch (channel or poly), Bend, Macro 1-4, Random (per note), Expr (CC 11). Destinations: pitch, amp,
   pan; per oscillator pitch, WT position, warp, level, pan, detune, blend; sub level and pan; noise level and pitch; cutoff,
@@ -56,6 +59,19 @@ up to 256 per table; a file shorter than 2048 samples is one single-cycle frame.
 left channel of a stereo file. The list is read when the plugin is inserted; a file loads on a background thread when a
 TABLE step reaches it, and projects remember it by file name. The installer keeps this folder on an upgrade.
 
+## Shape editors
+MPC pages cannot draw a live curve, so the shape of the edited envelope or LFO is shown as **40 bars of 25 heights**: each
+bar is a filmstrip (a `meter`) following a parameter the engine sets. The engine recomputes the bars at most every 50 ms
+(`PH_DISP_FRAMES`, a compile-time define), only after a change, and tells MPC which ones moved; nothing moves while you
+just play, so the screen thread has nothing to redraw.
+- **ENV > ENV SHAPE** (press ENV again): `EDIT` picks Env 1-4; ATTACK, HOLD, DECAY, RELEASE and SUSTAIN, A CURVE,
+  D CURVE, R CURVE set that envelope (they stand in for its own parameters, which the ENV page and the matrix use).
+- **LFO > LFO SHAPE** (press LFO twice more): `EDIT` picks LFO 1-4; `SHAPE` sets its shape. POINT picks a point (shown as
+  "2 / 5"), TIME, LEVEL and CURVE set it; ADD POINT adds one halfway to the next (or the previous) point, DEL POINT deletes
+  the chosen one (never the first, never below two), TO POINTS turns the current shape into points. Editing a point of a
+  built-in shape first turns that shape into points, so editing starts from what you heard.
+- A project saves the points with the plugin's state; presets (the PRESET menu) use the built-in shapes.
+
 ## Screen and controls (MPC Live II)
 Nine tabs; every Q-Link column is one frame of four stacked controls in the order of the four physical knobs, the
 Q-Link button moves to the next column (outlined by MPC), and frames stay clear of the Q-Link sidebar. Touch a control,
@@ -68,7 +84,9 @@ then turn the data wheel: one step per click on lists and whole numbers. Lists o
 | SUB NOISE | Sub on, shape, octave, level | Sub pan, route | Noise on, type, pitch, level | Key track, pan |
 | FILTER | On, type, cutoff, resonance | Drive, key track, Env 2 amount, mix | Routing A, B, noise, sub | Env 2 ADSR |
 | ENV | Env 1 ADSR | Env 2 | Env 3 | Env 4 |
-| LFO | LFO n: shape, rate, sync, mode (sub-page 2: rise, phase) | | | |
+| ENV SHAPE (ENV, 2nd press) | Attack, hold, decay, release | Sustain, A, D and R curves | Edit (Env 1-4) | |
+| LFO | LFO n: shape, rate, sync, mode (2nd press: rise, phase) | | | |
+| LFO SHAPE (LFO, 3rd press) | Point, time, level, curve | Shape | Edit (LFO 1-4) | |
 | MOD | Slot n: source, aux, destination, amount (four sub-pages, slots 1-16) | | | |
 | FX | Slot n: effect (tap), then P1, P2, P3, mix on the Q-Links (two sub-pages, slots 1-8) | | | |
 
@@ -91,8 +109,10 @@ python3 vst/make_params.py      # parameters -> vst/params.json, src/ph_params.h
 python3 vst/make_presets.py     # presets -> vst/presets.json
 python3 vst/make_layout.py      # the skin layout -> vst/layout.conf
 python3 vst/art/make_tile.py    # the Instruments-browser tile (Pillow)
+python3 vst/art/make_strips.py  # the shape displays' filmstrips (Pillow)
 ./build.sh                      # host test (x86, ASan), then the armv7 + aarch64 builds and the skin (Docker)
 ../../tools/test_port.sh vst/vst.json aarch64
+test/run.sh                     # the shape editors' own test (x86, ASan/UBSan)
 ```
 Parameter indices are locked by `vst/params.lock`: append new parameters at the end of `make_params.py`. `skin_check`
 prints TOUCH warnings for the option lists of the popups (an open list covers the controls under it); nothing else
@@ -103,5 +123,13 @@ From CI: `.github/workflows/philtre-release.yml` runs on each push that changes 
 `main`) and attaches both zips to a **draft** release `philtre-v<version>`; publish it after the device checks.
 
 ## Not in this version
-Drawing wavetables or LFO shapes (MPC pages cannot draw), dragging effects to reorder them, a second filter, envelope hold
-and curves, per-slot curves in the matrix, sample-based noise, MPE, and a 2.x skin (the skin is MPC OS 3.x only).
+Drawing wavetables or curves by hand (MPC pages cannot draw: curves are edited point by point), a moving playhead on the
+displays (redrawing costs MPC's screen thread a lot), dragging effects to reorder them, a second filter, per-slot curves
+in the matrix, sample-based noise, MPE, and a 2.x skin (the skin is MPC OS 3.x only).
+
+## Changes
+- 0.2.0 (2026-11-03): envelope hold and curves; Custom LFO shapes made of points; the ENV SHAPE and LFO SHAPE editors with
+  bar displays. Parameters only appended, but `Custom` was appended to the LFO shape list, so a project saved with a 0.1.0
+  draft reads its LFO shapes one option off; the default envelope curves (A +25, D and R +50) make 0.1.0 sounds slightly
+  different. Release 0.1.0 was never published.
+- 0.1.0 (2026-11-02): first version.

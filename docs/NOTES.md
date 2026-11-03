@@ -2145,3 +2145,19 @@ list: `ports/philtre/TESTING.md`. Findings that apply to other ports:
   inside `set_param`, and the sweep's worst block went to 20-24% on x86 (it would be several times that on Gen1). Guarding the
   long lines with a count of samples written since the switch, instead of clearing them, brought it to 6.5-8%. Keep large
   `memset`s and allocations out of parameter calls, as PORTING says for file I/O.
+
+## 2026-11-03: shape editors made of a selector, stand-in controls and bar displays (Philtre 0.2.0; offline only)
+
+`ports/philtre` 0.2.0 shows the edited envelope or LFO as 40 `meter` columns (filmstrips of 25 heights, 11 x 440 px each)
+bound to read-only parameters the engine sets, and edits it with controls that stand in for the selected envelope's / LFO's
+own parameters. Findings that apply to other ports:
+- **One editor with a selector beats one page per item.** A display needs one parameter per column, so a display per
+  envelope and LFO would have taken 320 parameters; one editor per kind with an `EDIT` selector takes 80. The stand-in
+  controls (`"live": true` in params.json, not saved in the state) write the real parameter, and `mpc_engine_changed()`
+  reports both ways: the real one when a stand-in moves, the stand-ins when the selector or a real parameter moves.
+- **`mpc_engine_changed()` is asked every block,** so an engine with hundreds of parameters should keep a count of pending
+  keys and return at once when there is none (a full scan per block was 1% of a callgrind profile of `bench`). The
+  wrapper then finds each reported key with a linear `strcmp` over the parameter table: fine for a few keys at a time.
+- **A display that only moves after an edit** (recomputed at most every 50 ms, unchanged columns not reported) costs MPC's
+  screen thread nothing while playing. Not yet seen on a device: the redraw cost while a knob turns, and that MPC maps a
+  meter's value to the frame the engine meant.

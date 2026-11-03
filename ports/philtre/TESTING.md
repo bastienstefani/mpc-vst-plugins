@@ -13,6 +13,15 @@
 | CPU, relative | `tools/bench.sh ports/philtre/vst/build/philtre-x86.so local` | PASS: p99 4.7-4.9%, worst block 6.5-8.1% (x86 on a shared VM, not a device number). Changing an effect type used to clear a 1 MB delay line inside the parameter call (sweep worst block 20-24%); long lines are now guarded by a count of written samples instead |
 | Release zips | `tools/release.py ... --extra ports/philtre/data/wavetables:wavetables --user-data wavetables`, `tools/catalog_check.py --catalog` | OK, 0 warnings; `wavetables/README.txt` in the plugin folder; labelled MPC OS 3.x only |
 
+## Offline, 0.2.0 (2026-11-03): envelope curves, Custom LFO points, shape editors
+| Check | How | Result |
+|---|---|---|
+| Shape editors | `test/run.sh` (25 checks, ASan/UBSan) | PASSED: the editor controls stand in for the chosen envelope / LFO and the host is told both ways; the displays follow (an envelope rises to the top and ends at 0, a square is high then low) and refuse host sets; points: editing makes the LFO Custom from its shape, ADD (after, or before when there is no room), DEL (never the first), POINT stops at the last, times stay between neighbours; a saved state brings the points back (2.3 kB of 8 kB); a +100 attack curve is louder early than -100, and a hold keeps the level up |
+| Host test, x86 and aarch64; stress, three seeds | as for 0.1.0 | PASSED; clean |
+| Builds | armv7, aarch64 | no warnings; glibc 2.29 / 2.34 |
+| Skin | `skin_check`, previews of ENV SHAPE and LFO SHAPE (with display values computed by the engine pasted in) | no overlaps outside open popup lists |
+| CPU, relative | `tools/bench.sh ... local`, 0.1.0 and 0.2.0 one after the other, twice | 8 voices the same (p99 2.0-2.2%); the Q-Link sweep mean 2.6-2.7% against 2.3-2.4% (p99 7.9-8.1% against 7.0-7.4%), x86 on a shared VM |
+
 ## On the device (MPC Live II, to do)
 Install: unzip `Philtre-<version>-mpc-armv7.zip` on the MPC and run `./install.sh` as root (it stops MPC, backs up
 `MPC.settings`, registers the plugin and starts MPC), or drop the zip into the MPC plugin installer app.
@@ -34,5 +43,9 @@ Install: unzip `Philtre-<version>-mpc-armv7.zip` on the MPC and run `./install.s
 | 13 | STOP | press STOP with knobs moved | nothing changes |
 | 14 | Browser tile | Sounds > INSTRUMENTS | the Philtre tile; a tap loads it |
 | 15 | Uninstall | `./uninstall.sh` | entry and folder gone, `wavetables/` kept |
+| 16 | ENV SHAPE display | ENV, press again; turn ATTACK, HOLD, the curves; switch EDIT between Env 1-4 | the bars follow within a moment; the knobs show the chosen envelope's values; no stutter in the audio while turning |
+| 17 | LFO SHAPE | LFO, press twice; pick a shape, then turn POINT, TIME, LEVEL, CURVE; ADD POINT, DEL POINT, TO POINTS | the bars follow; "2 / 5" style point count; a Custom LFO modulating cutoff sounds as drawn |
+| 18 | Display cost | `top` on MPC while sweeping a curve knob | note MPC's main thread; if it is high, raise `PH_DISP_FRAMES` |
+| 19 | Display heights | compare the bars with the values | the 25 heights land on the bars' frames (MPC maps a filmstrip's value to a frame: checked offline only) |
 
 Record the results here and in `tested.json` (device, MPC OS version, date).

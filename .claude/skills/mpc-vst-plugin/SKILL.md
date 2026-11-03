@@ -187,6 +187,9 @@ Parameter entries feeding `gen_vst.py` (`tools/params.py` format) can carry:
 - `vst.json`'s `"tile"` (a 270x110 PNG) becomes `Plugin Skins/browser_images/soundsmode.png` plus
   `Presets/0000-Default.xpl` in the skin folder (`tools/xpl.py`): the Sounds > INSTRUMENTS browser draws the
   artwork and a tap opens the plugin. MPC indexes `Presets/` at startup, so a new preset file needs a restart.
+- More `.xpl` presets: the chunk is the engine's `get_param("state")` text plus a NUL, so `xpl.xpl()` can write
+  presets with the full state (`ports/philtre/tools/serum2_import.py` converts Serum 2 presets that way). A
+  hand-copied file needs the real `.so` path in `file=`, and an upgrade replaces the plugin folder (NOTES 2026-11-03).
 - In `layout.conf`, a stepper's `prev=`/`next=` can call a different param's key than the one it displays,
   and `get=` (paired with the widget's own separate "Text" handle) can display a different key than the one
   it steps -- both needed together when the DSP's stepping verb and its human-readable name live on

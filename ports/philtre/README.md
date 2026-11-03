@@ -5,8 +5,9 @@ II's screen, its four Q-Link knobs and its data wheel. Original code (GPL-3.0-or
 Xfer Records: no Serum code, presets, wavetables or artwork. The built-in wavetables are computed when the plugin loads,
 the presets are original, and you can load your own `.wav` wavetables.
 
-Status: **0.2.0, offline only** (2026-11-03; envelope curves and the LFO and envelope shape editors are new in 0.2.0). It builds for Gen1 (armv7) and Gen2 (aarch64) and passes the host tests and a
-sanitizer stress run; nothing has run on a device yet. See `TESTING.md`.
+Status: **0.3.0, offline only** (2026-11-03; the Serum 2 preset import is new in 0.3.0, the envelope curves and shape
+editors in 0.2.0). It builds for Gen1 (armv7) and Gen2 (aarch64) and passes the host tests and a sanitizer stress run;
+nothing has run on a device yet. See `TESTING.md`.
 
 ## Sound engine
 Per voice (8 voices, poly, mono or legato, glide, bend range, velocity):
@@ -72,6 +73,41 @@ just play, so the screen thread has nothing to redraw.
   built-in shape first turns that shape into points, so editing starts from what you heard.
 - A project saves the points with the plugin's state; presets (the PRESET menu) use the built-in shapes.
 
+## Serum 2 presets
+`tools/serum2_import.py` turns Serum 2 presets (`.SerumPreset` files you own) into Philtre presets (`.xpl`), on a
+computer, from a copy of this repository (it reads Philtre's parameter list from `vst/make_params.py`). Philtre is not
+Serum, so a converted preset is a starting point in the same direction, not the same sound.
+```
+pip install zstandard                    # Serum 2 presets are Zstandard-compressed; not needed with Python 3.14+
+python3 ports/philtre/tools/serum2_import.py -o out <preset files or folders>
+python3 ports/philtre/tools/serum2_import.py -o out --tables "<Serum 2 Presets>/Tables" <presets>   # with the wavetables
+```
+Then copy `out/Presets/*.xpl` into `<Synths folder>/bastienstefani - VST - Philtre/Presets/` on the MPC and restart MPC
+(it reads that folder at startup); the presets are on Philtre's preset page (Sounds > INSTRUMENTS, tap the Philtre tile).
+With `--tables`, also copy `out/wavetables/serum2/` into the plugin's `wavetables/` folder: each oscillator then plays
+Serum's own table (Philtre reads Serum's 2048-sample frames), and until the file is there a built-in table chosen from the
+file's name stands in. An upgrade of Philtre replaces the plugin folder except `wavetables/`: copy the presets again.
+`--synths` sets the Synths folder written in the files (default `/sdcard/Synths`).
+
+- **Converted:** the first two oscillators that are on (table, position, warp, unison up to 8, detune, phase, pitch, level,
+  pan), noise (a noise type chosen from the sample's name), sub, the filter routing, filter 1 (or filter 2 when only it is
+  on), the four envelopes with their curves, the LFOs the matrix uses (four: points, mode, rate), the first 16 matrix slots
+  whose source and destination Philtre has (amounts rescaled to each destination's range; a unipolar LFO or a bipolar
+  envelope moves the destination's base value by half its amount, as Serum does), the macros the matrix uses, mono /
+  legato, and the main effect rack in order (Hyper/Dimension as Ensemble, Distortion, Compressor or Multiband, Delay,
+  Reverb or Plate, Chorus, Flanger, Phaser, EQ, Filter).
+- **Left out, listed in `out/import-report.txt` with "x":** a third oscillator, sample, granular and spectral oscillators
+  (a built-in table plays), a wavetable stored inside the preset, the second warp, filter 2 when both are on, LFOs past
+  four and the chaos LFOs (a smooth random LFO plays), matrix sources the converter does not know (the report gives the
+  number: `--source 25="Macro 1"` names it), slot curves, the arpeggiator and clips, effect racks 2 and 3, and effects
+  Philtre has no counterpart for.
+- **Accuracy:** unison, detune, wavetable position, cutoff, resonance, envelope times and sustain convert with units
+  measured on Serum 2.1.5 (published by the serum2-preset-loader project, MIT). Levels, pan, pitch ranges, curve shapes,
+  LFO rates, routing defaults and effect settings are read off preset files or guessed; the report marks them "~" and
+  the converter marks them `[g]` next to their constant. `TESTING.md` says how to calibrate one.
+- The format comes from community reverse engineering (no Xfer Records code or documentation); the converter reads your
+  files on your computer. Presets and wavetables belong to their makers: do not share converted factory content.
+
 ## Screen and controls (MPC Live II)
 Nine tabs; every Q-Link column is one frame of four stacked controls in the order of the four physical knobs, the
 Q-Link button moves to the next column (outlined by MPC), and frames stay clear of the Q-Link sidebar. Touch a control,
@@ -112,7 +148,8 @@ python3 vst/art/make_tile.py    # the Instruments-browser tile (Pillow)
 python3 vst/art/make_strips.py  # the shape displays' filmstrips (Pillow)
 ./build.sh                      # host test (x86, ASan), then the armv7 + aarch64 builds and the skin (Docker)
 ../../tools/test_port.sh vst/vst.json aarch64
-test/run.sh                     # the shape editors' own test (x86, ASan/UBSan)
+test/run.sh                     # the shape editors' and the Serum import's own tests (x86, ASan/UBSan; the import
+                                # test needs Zstandard for Python and builds its Serum presets itself)
 ```
 Parameter indices are locked by `vst/params.lock`: append new parameters at the end of `make_params.py`. `skin_check`
 prints TOUCH warnings for the option lists of the popups (an open list covers the controls under it); nothing else
@@ -128,6 +165,8 @@ displays (redrawing costs MPC's screen thread a lot), dragging effects to reorde
 in the matrix, sample-based noise, MPE, and a 2.x skin (the skin is MPC OS 3.x only).
 
 ## Changes
+- 0.3.0 (2026-11-03): Serum 2 preset import (`tools/serum2_import.py`). A project or preset naming a user wavetable file
+  that is missing now keeps the built-in table it names (a converted preset's stand-in) instead of the first one.
 - 0.2.0 (2026-11-03): envelope hold and curves; Custom LFO shapes made of points; the ENV SHAPE and LFO SHAPE editors with
   bar displays. Parameters only appended, but `Custom` was appended to the LFO shape list, so a project saved with a 0.1.0
   draft reads its LFO shapes one option off; the default envelope curves (A +25, D and R +50) make 0.1.0 sounds slightly

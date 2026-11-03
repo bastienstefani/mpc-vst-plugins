@@ -22,6 +22,17 @@
 | Skin | `skin_check`, previews of ENV SHAPE and LFO SHAPE (with display values computed by the engine pasted in) | no overlaps outside open popup lists |
 | CPU, relative | `tools/bench.sh ... local`, 0.1.0 and 0.2.0 one after the other, twice | 8 voices the same (p99 2.0-2.2%); the Q-Link sweep mean 2.6-2.7% against 2.3-2.4% (p99 7.9-8.1% against 7.0-7.4%), x86 on a shared VM |
 
+## Offline, 0.3.0 (2026-11-03): Serum 2 preset import
+| Check | How | Result |
+|---|---|---|
+| Converter | `test/test_import.py` (run by `test/run.sh`): Serum 2 presets built by the test (an init, a full patch, a three-oscillator one) and five broken files | PASSED, 54 checks: defaults where a field is absent; units (envelope times, sustain as gain, cutoff, position, detune); oscillator remapping when A is off; LFO points (y flipped, steps kept, 31 points cut to 16); matrix amounts and base offsets; `--source`; effect order; report lines; `--tables`; bad files refused, not crashing (bad magic, cut payload, 100-deep nesting, a list payload, a 2^40-entry map) |
+| Engine | `test/test_states.c` (run by `test/run.sh`, ASan/UBSan) | PASSED: each converted state loads and saves back with the same values and points; a 4-note chord is heard and stays finite; a missing table file keeps the named built-in |
+| Real files | 7 `.SerumPreset` test files from open-source Serum 2 tools (Serum 2.0.17-2.1.4; not in this repo), then `test_states` on the results | all decoded and converted (2.2-2.4 kB states); sample and multisample oscillators reported; each played (peak 0.37-0.89) |
+| Host test x86, builds | as for 0.1.0 | PASSED; armv7 and aarch64 without warnings, glibc 2.29 / 2.34 |
+
+To calibrate a `[g]` unit: in Serum 2, save Init, then the same with one control moved to a known value (e.g. an LFO at
+1/8, or Osc A level at 50 %); `serum2_import.py --dump` both and compare the field, then fix the constant in the converter.
+
 ## On the device (MPC Live II, to do)
 Install: unzip `Philtre-<version>-mpc-armv7.zip` on the MPC and run `./install.sh` as root (it stops MPC, backs up
 `MPC.settings`, registers the plugin and starts MPC), or drop the zip into the MPC plugin installer app.
@@ -47,5 +58,8 @@ Install: unzip `Philtre-<version>-mpc-armv7.zip` on the MPC and run `./install.s
 | 17 | LFO SHAPE | LFO, press twice; pick a shape, then turn POINT, TIME, LEVEL, CURVE; ADD POINT, DEL POINT, TO POINTS | the bars follow; "2 / 5" style point count; a Custom LFO modulating cutoff sounds as drawn |
 | 18 | Display cost | `top` on MPC while sweeping a curve knob | note MPC's main thread; if it is high, raise `PH_DISP_FRAMES` |
 | 19 | Display heights | compare the bars with the values | the 25 heights land on the bars' frames (MPC maps a filmstrip's value to a frame: checked offline only) |
+| 20 | Imported preset | convert a Serum 2 preset, copy the `.xpl` to the plugin's `Presets/`, restart MPC, open it from the tile's preset page | it loads with its sound (says whether MPC needs the file's plugin path or matches the uid) |
+| 21 | Imported table | convert with `--tables`, copy `wavetables/serum2/` | OSC A shows the table's name and plays it after a moment |
+| 22 | Compared to Serum | play the same preset in Serum 2 and on the MPC | note what differs most (LFO rates, levels, filter type): the `[g]` units to calibrate first |
 
 Record the results here and in `tested.json` (device, MPC OS version, date).

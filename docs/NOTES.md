@@ -2161,3 +2161,20 @@ own parameters. Findings that apply to other ports:
 - **A display that only moves after an edit** (recomputed at most every 50 ms, unchanged columns not reported) costs MPC's
   screen thread nothing while playing. Not yet seen on a device: the redraw cost while a knob turns, and that MPC maps a
   meter's value to the frame the engine meant.
+
+## 2026-11-03: Serum 2 presets converted to .xpl presets (Philtre 0.3.0; offline only)
+
+`ports/philtre/tools/serum2_import.py` converts Serum 2 `.SerumPreset` files into Philtre `.xpl` presets on a computer.
+Findings that apply to other ports:
+- **An `.xpl` can carry any engine state.** Its `<state>` is the fxb chunk set around the wrapper's chunk, and the
+  wrapper's chunk is the engine's `get_param("state")` text plus a NUL, so a tool that writes the engine's state format
+  makes presets with everything a project keeps (Philtre's LFO points and wavetable file names), which the PRESET menu's
+  `presets.json` values cannot. `tools/xpl.py`'s `xpl()` writes it. Not seen on a device yet: a hand-copied `.xpl`
+  (its `file=` written with the real `.so` path, since the installer only fills `%payload-path%` in files it ships)
+  showing on the preset page after a restart, and whether MPC matches the plugin by uid or by path.
+- **Serum 2's container** (from community tools, checked here on 7 test files from Serum 2.0.17 to 2.1.4): `XferJson\0`,
+  a uint64 LE JSON length and a JSON header, a uint32 LE decompressed size, a uint32 LE format version 2, then Zstandard
+  CBOR. A module's `plainParams` keeps only what differs from Serum's defaults (or the string `"default"`), so a converter
+  needs Serum's defaults: the measured ones come from serum2-preset-loader (MIT; a DawDreamer probe of 2.1.5). Still
+  unknown here: matrix source numbers past 15 (1 mod wheel, 2-5 envelopes, 6-15 LFOs), the oscillator routing defaults,
+  and the LFO rate unit; the converter takes `--source N=NAME` and reports what it could not place.

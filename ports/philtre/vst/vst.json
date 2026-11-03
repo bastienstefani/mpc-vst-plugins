@@ -2,7 +2,7 @@
   "name": "Philtre",
   "vendor": "bastienstefani",
   "uid": "PhlT",
-  "version": 100,
+  "version": 200,
   "so": "philtre.so",
   "params": "params.json",
   "layout": "layout.conf",

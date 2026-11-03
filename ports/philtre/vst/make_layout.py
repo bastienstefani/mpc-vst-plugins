@@ -177,14 +177,38 @@ help_text(["Routing Off: that", "source skips the", "filter", "", "Formant: cuto
 qlinks("FILTER", ["f_on", "f_type", "f_cut", "f_res", "f_drive", "f_key", "f_env", "f_mix",
                   "f_ra", "f_rb", "f_rn", "f_rs", "e2_a", "e2_d", "e2_s", "e2_r"])
 
-# ---- ENV ----
+# ---- curve displays: DISP_COLS meter columns over the left half (frames x 10..506), one filmstrip each ----
+DCOL_W, DTOP, DH = 11, 214, 440
+
+
+def curve_editor(banks, title, sel_key, disp_key, strip):
+    out.append('frame x=10 y=96 w=496 h=608 title="%s"%s' % (title, bk(banks)))
+    out.append('enum_h cx=258 cy=172 label="EDIT" key=%s sw=104%s' % (sel_key, bk(banks)))
+    x0 = 10 + (496 - mp.DISP_COLS * DCOL_W) // 2
+    for i in range(mp.DISP_COLS):
+        out.append('meter cx=%d cy=%d w=%d h=%d key=%s_%d strip=%s frames=%d%s'
+                   % (x0 + DCOL_W * i + DCOL_W // 2, DTOP + DH // 2, DCOL_W, DH, disp_key, i + 1, strip, mp.DISP_LEVELS, bk(banks)))
+
+
+# ---- ENV (two sub-pages: the four envelopes, and the shape editor) ----
 out.append("\n[tab ENV]")
 for e in range(4):
-    frame(e, "ENV %d%s" % (e + 1, " (AMP)" if e == 0 else ""))
+    frame(e, "ENV %d%s" % (e + 1, " (AMP)" if e == 0 else ""), "ENV")
     for i, k in enumerate(("a", "d", "s", "r")):
-        ctl(e, i, "knob", ("ATTACK", "DECAY", "SUSTAIN", "RELEASE")[i], "e%d_%s" % (e + 1, k))
-help_text(["Env 1 is the amp", "Env 2 has its own", "filter amount", "", "All four are mod", "sources"])
+        ctl(e, i, "knob", ("ATTACK", "DECAY", "SUSTAIN", "RELEASE")[i], "e%d_%s" % (e + 1, k), "ENV")
+help_text(["Env 1 is the amp", "Env 2 has its own", "filter amount", "", "All four are mod", "sources", "",
+           "Press ENV again", "for hold and curves"], "ENV")
+curve_editor("ENV SHAPE", "ENV SHAPE", "ev_sel", "envd", "art/env_strip.png")
+frame(2, "TIMES", "ENV SHAPE")
+for i, (k, lab) in enumerate((("a", "ATTACK"), ("h", "HOLD"), ("d", "DECAY"), ("r", "RELEASE"))):
+    ctl(2, i, "knob", lab, "ev_%s" % k, "ENV SHAPE")
+frame(3, "LEVEL / CURVES", "ENV SHAPE")
+for i, (k, lab) in enumerate((("s", "SUSTAIN"), ("ac", "A CURVE"), ("dc", "D CURVE"), ("rc", "R CURVE"))):
+    ctl(3, i, "knob", lab, "ev_%s" % k, "ENV SHAPE")
+help_text(["EDIT picks the", "envelope; the knobs", "set that one", "", "Curve +: fast, then", "slow; -: the other", "way; 0: straight"],
+          "ENV SHAPE")
 qlinks("ENV", ["e%d_%s" % (e, k) for e in range(1, 5) for k in ("a", "d", "s", "r")])
+qlinks("ENV SHAPE", ["ev_a", "ev_h", "ev_d", "ev_r", "ev_s", "ev_ac", "ev_dc", "ev_rc", "ev_sel"] + ["-"] * 7)
 
 # ---- LFO (two sub-pages) ----
 out.append("\n[tab LFO]")
@@ -198,9 +222,20 @@ for l in range(4):
     ctl(l, 0, "knob", "RISE", "l%d_rise" % (l + 1), "LFO RISE")
     ctl(l, 1, "knob", "PHASE", "l%d_phase" % (l + 1), "LFO RISE")
 help_text(["Free: one LFO for", "all voices", "Retrig: restarts", "on each note", "Env: one cycle,", "then holds", "",
-           "Press LFO again", "for rise and phase"])
+           "Press LFO again", "for rise, phase", "and the shape editor"], "LFO|LFO RISE")
+curve_editor("LFO SHAPE", "LFO SHAPE", "lv_sel", "lfod", "art/lfo_strip.png")
+frame(2, "POINT", "LFO SHAPE")
+for i, (k, lab) in enumerate((("pt", "POINT"), ("ptt", "TIME"), ("ptl", "LEVEL"), ("ptc", "CURVE"))):
+    ctl(2, i, "knob", lab, "lv_%s" % k, "LFO SHAPE")
+frame(3, "EDIT", "LFO SHAPE")
+ctl(3, 0, "popup", "SHAPE", "lv_shape", "LFO SHAPE")
+for i, (k, lab) in enumerate((("add", "ADD POINT"), ("del", "DEL POINT"), ("topts", "TO POINTS"))):   # same length: same text size
+    out.append('button cx=%d cy=%d w=200 h=44 label="%s" key=lv_%s%s' % (CX[3], TOPS[i + 1] + 64, lab, k, bk("LFO SHAPE")))
+help_text(["Custom shape: up to", "16 points; each one", "curves to the next", "", "Editing a point makes", "the LFO Custom, from",
+           "the shape it had", "", "The first point", "starts the cycle"], "LFO SHAPE")
 qlinks("LFO", ["l%d_%s" % (l, k) for l in range(1, 5) for k in ("shape", "rate", "sync", "mode")])
 qlinks("LFO RISE", [k for l in range(1, 5) for k in ("l%d_rise" % l, "l%d_phase" % l, "-", "-")])
+qlinks("LFO SHAPE", ["lv_pt", "lv_ptt", "lv_ptl", "lv_ptc", "lv_shape", "-", "-", "-", "lv_sel"] + ["-"] * 7)
 
 # ---- MOD (four sub-pages of four slots) ----
 out.append("\n[tab MOD]")

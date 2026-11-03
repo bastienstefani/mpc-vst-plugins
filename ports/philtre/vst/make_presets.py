@@ -137,7 +137,7 @@ def build():
                 raise SystemExit("preset %r: %r is not a parameter" % (name, k))
         vals = {}
         for p in mp.P:
-            if p.get("momentary"):
+            if p.get("momentary") or p.get("virtual"):   # stand-ins and displays follow the real parameters
                 continue
             vals[p["key"]] = ch.get(p["key"], p["options"][p["default"]] if "options" in p else p["default"])
         out.append({"name": name, "values": vals})

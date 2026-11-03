@@ -783,7 +783,8 @@
     "Smooth",
     "Pump",
     "Exp Up",
-    "Stairs"
+    "Stairs",
+    "Custom"
    ],
    "default": 1
   },
@@ -855,7 +856,8 @@
     "Smooth",
     "Pump",
     "Exp Up",
-    "Stairs"
+    "Stairs",
+    "Custom"
    ],
    "default": 1
   },
@@ -927,7 +929,8 @@
     "Smooth",
     "Pump",
     "Exp Up",
-    "Stairs"
+    "Stairs",
+    "Custom"
    ],
    "default": 1
   },
@@ -999,7 +1002,8 @@
     "Smooth",
     "Pump",
     "Exp Up",
-    "Stairs"
+    "Stairs",
+    "Custom"
    ],
    "default": 1
   },
@@ -3361,6 +3365,1111 @@
    "default": 50,
    "dynamic_display": true,
    "dynamic_name": true
+  },
+  {
+   "key": "e1_h",
+   "name": "Env1 Hold",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "e1_ac",
+   "name": "Env1 A Curve",
+   "min": -100,
+   "max": 100,
+   "default": 25,
+   "dynamic_display": true
+  },
+  {
+   "key": "e1_dc",
+   "name": "Env1 D Curve",
+   "min": -100,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "e1_rc",
+   "name": "Env1 R Curve",
+   "min": -100,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "e2_h",
+   "name": "Env2 Hold",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "e2_ac",
+   "name": "Env2 A Curve",
+   "min": -100,
+   "max": 100,
+   "default": 25,
+   "dynamic_display": true
+  },
+  {
+   "key": "e2_dc",
+   "name": "Env2 D Curve",
+   "min": -100,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "e2_rc",
+   "name": "Env2 R Curve",
+   "min": -100,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "e3_h",
+   "name": "Env3 Hold",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "e3_ac",
+   "name": "Env3 A Curve",
+   "min": -100,
+   "max": 100,
+   "default": 25,
+   "dynamic_display": true
+  },
+  {
+   "key": "e3_dc",
+   "name": "Env3 D Curve",
+   "min": -100,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "e3_rc",
+   "name": "Env3 R Curve",
+   "min": -100,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "e4_h",
+   "name": "Env4 Hold",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true
+  },
+  {
+   "key": "e4_ac",
+   "name": "Env4 A Curve",
+   "min": -100,
+   "max": 100,
+   "default": 25,
+   "dynamic_display": true
+  },
+  {
+   "key": "e4_dc",
+   "name": "Env4 D Curve",
+   "min": -100,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "e4_rc",
+   "name": "Env4 R Curve",
+   "min": -100,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true
+  },
+  {
+   "key": "ev_sel",
+   "name": "Env Edit",
+   "options": [
+    "Env 1",
+    "Env 2",
+    "Env 3",
+    "Env 4"
+   ],
+   "default": 0,
+   "refresh_display": true
+  },
+  {
+   "key": "ev_a",
+   "name": "Edit Attack",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "ev_h",
+   "name": "Edit Hold",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "ev_d",
+   "name": "Edit Decay",
+   "min": 0,
+   "max": 100,
+   "default": 77,
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "ev_s",
+   "name": "Edit Sustain",
+   "min": 0,
+   "max": 100,
+   "default": 100,
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "ev_r",
+   "name": "Edit Release",
+   "min": 0,
+   "max": 100,
+   "default": 34,
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "ev_ac",
+   "name": "Edit A Curve",
+   "min": -100,
+   "max": 100,
+   "default": 25,
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "ev_dc",
+   "name": "Edit D Curve",
+   "min": -100,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "ev_rc",
+   "name": "Edit R Curve",
+   "min": -100,
+   "max": 100,
+   "default": 50,
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lv_sel",
+   "name": "LFO Edit",
+   "options": [
+    "LFO 1",
+    "LFO 2",
+    "LFO 3",
+    "LFO 4"
+   ],
+   "default": 0,
+   "refresh_display": true
+  },
+  {
+   "key": "lv_shape",
+   "name": "Edit Shape",
+   "options": [
+    "Sine",
+    "Triangle",
+    "Saw Up",
+    "Saw Down",
+    "Square",
+    "S&H",
+    "Smooth",
+    "Pump",
+    "Exp Up",
+    "Stairs",
+    "Custom"
+   ],
+   "default": 1,
+   "live": true
+  },
+  {
+   "key": "lv_pt",
+   "name": "Point",
+   "min": 1,
+   "max": 16,
+   "default": 1,
+   "display": "int",
+   "dynamic_display": true,
+   "refresh_display": true,
+   "live": true
+  },
+  {
+   "key": "lv_ptt",
+   "name": "Point Time",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lv_ptl",
+   "name": "Point Level",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lv_ptc",
+   "name": "Point Curve",
+   "min": -100,
+   "max": 100,
+   "default": 0,
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lv_add",
+   "name": "Add Point",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "momentary": true
+  },
+  {
+   "key": "lv_del",
+   "name": "Delete Point",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "momentary": true
+  },
+  {
+   "key": "lv_topts",
+   "name": "To Points",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "momentary": true
+  },
+  {
+   "key": "envd_1",
+   "name": "Env View 1",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_2",
+   "name": "Env View 2",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_3",
+   "name": "Env View 3",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_4",
+   "name": "Env View 4",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_5",
+   "name": "Env View 5",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_6",
+   "name": "Env View 6",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_7",
+   "name": "Env View 7",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_8",
+   "name": "Env View 8",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_9",
+   "name": "Env View 9",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_10",
+   "name": "Env View 10",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_11",
+   "name": "Env View 11",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_12",
+   "name": "Env View 12",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_13",
+   "name": "Env View 13",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_14",
+   "name": "Env View 14",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_15",
+   "name": "Env View 15",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_16",
+   "name": "Env View 16",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_17",
+   "name": "Env View 17",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_18",
+   "name": "Env View 18",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_19",
+   "name": "Env View 19",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_20",
+   "name": "Env View 20",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_21",
+   "name": "Env View 21",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_22",
+   "name": "Env View 22",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_23",
+   "name": "Env View 23",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_24",
+   "name": "Env View 24",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_25",
+   "name": "Env View 25",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_26",
+   "name": "Env View 26",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_27",
+   "name": "Env View 27",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_28",
+   "name": "Env View 28",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_29",
+   "name": "Env View 29",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_30",
+   "name": "Env View 30",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_31",
+   "name": "Env View 31",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_32",
+   "name": "Env View 32",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_33",
+   "name": "Env View 33",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_34",
+   "name": "Env View 34",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_35",
+   "name": "Env View 35",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_36",
+   "name": "Env View 36",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_37",
+   "name": "Env View 37",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_38",
+   "name": "Env View 38",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_39",
+   "name": "Env View 39",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "envd_40",
+   "name": "Env View 40",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_1",
+   "name": "LFO View 1",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_2",
+   "name": "LFO View 2",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_3",
+   "name": "LFO View 3",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_4",
+   "name": "LFO View 4",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_5",
+   "name": "LFO View 5",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_6",
+   "name": "LFO View 6",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_7",
+   "name": "LFO View 7",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_8",
+   "name": "LFO View 8",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_9",
+   "name": "LFO View 9",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_10",
+   "name": "LFO View 10",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_11",
+   "name": "LFO View 11",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_12",
+   "name": "LFO View 12",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_13",
+   "name": "LFO View 13",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_14",
+   "name": "LFO View 14",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_15",
+   "name": "LFO View 15",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_16",
+   "name": "LFO View 16",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_17",
+   "name": "LFO View 17",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_18",
+   "name": "LFO View 18",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_19",
+   "name": "LFO View 19",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_20",
+   "name": "LFO View 20",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_21",
+   "name": "LFO View 21",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_22",
+   "name": "LFO View 22",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_23",
+   "name": "LFO View 23",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_24",
+   "name": "LFO View 24",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_25",
+   "name": "LFO View 25",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_26",
+   "name": "LFO View 26",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_27",
+   "name": "LFO View 27",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_28",
+   "name": "LFO View 28",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_29",
+   "name": "LFO View 29",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_30",
+   "name": "LFO View 30",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_31",
+   "name": "LFO View 31",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_32",
+   "name": "LFO View 32",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_33",
+   "name": "LFO View 33",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_34",
+   "name": "LFO View 34",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_35",
+   "name": "LFO View 35",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_36",
+   "name": "LFO View 36",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_37",
+   "name": "LFO View 37",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_38",
+   "name": "LFO View 38",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_39",
+   "name": "LFO View 39",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
+  },
+  {
+   "key": "lfod_40",
+   "name": "LFO View 40",
+   "min": 0,
+   "max": 24,
+   "default": 0,
+   "display": "int",
+   "dynamic_display": true,
+   "live": true
   }
  ],
  "sections": [
@@ -3482,7 +4591,23 @@
     "e4_a",
     "e4_d",
     "e4_s",
-    "e4_r"
+    "e4_r",
+    "e1_h",
+    "e1_ac",
+    "e1_dc",
+    "e1_rc",
+    "e2_h",
+    "e2_ac",
+    "e2_dc",
+    "e2_rc",
+    "e3_h",
+    "e3_ac",
+    "e3_dc",
+    "e3_rc",
+    "e4_h",
+    "e4_ac",
+    "e4_dc",
+    "e4_rc"
    ]
   },
   {

@@ -82,7 +82,7 @@ static float map_rise(float x) { return 5.0f * (x / 100) * (x / 100); }
 static float map_glide(float x) { return x <= 0 ? 0 : 0.002f * powf(1000.0f, x / 100); }
 static float map_detune(float x) { float d = x / 100; return 0.75f * d * sqrtf(d); }   /* +- semitones at the edges */
 
-enum { E_IDLE, E_ATT, E_DEC, E_REL };
+enum { E_IDLE, E_ATT, E_HOLD, E_DEC, E_SUS, E_REL };
 
 typedef struct { float ic1, ic2, a1, a2, a3, k, da1, da2, da3, dk; } svf_t;
 
@@ -108,18 +108,20 @@ typedef struct {
     int cw;
     float ap[2][5], apa, apat, apfb;
     float fdrive, fmix;
-    float env[4];
+    float env[4], et[4], efrom[4];   /* level, position in the stage (0..1), level the stage started from */
     int est[4];
     float lph[4], lra[4], lrb[4], lrise[4], lrate_mod[4];
     int ldone[4];
     float amp, ampt, pl, pr, plt, prt;
 } voice_t;
 
+typedef struct { int n; float t[MAX_POINTS], v[MAX_POINTS], c[MAX_POINTS], k[MAX_POINTS], kn[MAX_POINTS]; } pts_t;   /* time 0..1, level -1..1, curve -1..1; k, kn: the curve's exponent and norm, kept by pts_prep() */
+
 typedef struct {
     float v[NP];
     int dirty;
     /* derived */
-    float ecoef[4][3], esus[4], glide_c, vol_g, ftbase, fkey, fenv, fres, fdrive, fmix, lrise_t[4];
+    float einv[4][4], esus[4], ek[4][3], enorm[4][3], glide_c, vol_g, ftbase, fkey, fenv, fres, fdrive, fmix, lrise_t[4];
     int nslot, slot_src[N_SLOTS], slot_aux[N_SLOTS], slot_dst[N_SLOTS];
     float slot_amt[N_SLOTS];
     /* play state */
@@ -141,6 +143,10 @@ typedef struct {
     float fxmod[FX_SLOTS][2];
     float gain_cur, dc_x[2], dc_y[2];
     float mixL[128], mixR[128];
+    /* LFO points (shape Custom), the curve editors and their displays */
+    pts_t pts[4];
+    unsigned char chg[NP];        /* params the engine changed by itself, to report (mpc_engine_changed) */
+    int chg_cur, chg_n, disp_dirty, disp_wait;   /* chg_n: how many are waiting */
 } ph_t;
 
 /* ---------------- parameter lookup ---------------- */
@@ -170,17 +176,26 @@ static int find_param(const char *k, size_t n) {
     return -1;
 }
 
+/* ---------------- curves: c in -1..1, > 0 fast at the start and slow at the end, < 0 the other way, 0 straight ---------------- */
+static inline float curve_norm(float k) { return fabsf(k) < 1e-3f ? 0 : 1 / (1 - expf(-k)); }
+static inline float curve_at(float t, float k, float norm) { return norm == 0 ? t : (1 - expf(-k * t)) * norm; }
+
 /* ---------------- derived values ---------------- */
 static float tick_coef(float tau) { return tau <= 0 ? 1 : 1 - expf(-(float)CR / (tau * SR)); }
 
 static void derive(ph_t *s) {
     const float *v = s->v;
     for (int e = 0; e < 4; e++) {
-        int b = P_E1_A + 4 * e;
-        s->ecoef[e][0] = tick_coef(map_etime(v[b]) / 1.466f);
-        s->ecoef[e][1] = tick_coef(map_etime(v[b + 1]) / 4);
+        int b = P_E1_A + 4 * e, hb = P_E1_H + 4 * e;
+        s->einv[e][0] = 1 / map_etime(v[b]);
+        s->einv[e][1] = v[hb] > 0 ? 1 / map_etime(v[hb]) : 0;   /* 0: no hold */
+        s->einv[e][2] = 1 / map_etime(v[b + 1]);
+        s->einv[e][3] = 1 / map_etime(v[b + 3]);
         s->esus[e] = v[b + 2] / 100;
-        s->ecoef[e][2] = tick_coef(map_etime(v[b + 3]) / 4);
+        for (int c = 0; c < 3; c++) {
+            s->ek[e][c] = v[hb + 1 + c] * 0.08f;   /* +-100 -> +-8 */
+            s->enorm[e][c] = curve_norm(s->ek[e][c]);
+        }
     }
     float gt = map_glide(v[P_GLIDE]);
     s->glide_c = gt > 0 ? tick_coef(gt / 3) : 1;
@@ -238,6 +253,12 @@ static float rand_bi(unsigned *st) {
     return (float)(int32_t)*st * (1.0f / 2147483648.0f);
 }
 
+static void env_attack(voice_t *vc) { for (int e = 0; e < 4; e++) { vc->est[e] = E_ATT; vc->et[e] = 0; vc->efrom[e] = vc->env[e]; } }
+static void env_release(voice_t *vc) {
+    for (int e = 0; e < 4; e++)
+        if (vc->est[e] != E_IDLE && vc->est[e] != E_REL) { vc->est[e] = E_REL; vc->et[e] = 0; vc->efrom[e] = vc->env[e]; }
+}
+
 static void voice_start(ph_t *s, voice_t *vc, int note, float vel) {
     int fresh = !vc->active;
     vc->note = note; vc->vel = vel; vc->gate = 1; vc->pedal = 0;
@@ -275,7 +296,7 @@ static void voice_start(ph_t *s, voice_t *vc, int note, float vel) {
         }
         vc->lrise[l] = s->lrise_t[l] > 0 ? 0 : 1;
     }
-    for (int e = 0; e < 4; e++) vc->est[e] = E_ATT;
+    env_attack(vc);
     vc->active = 1;
     s->last_pitch = (float)note;
     s->last_voice = (int)(vc - s->vc);
@@ -284,7 +305,7 @@ static void voice_start(ph_t *s, voice_t *vc, int note, float vel) {
 static void voice_release(ph_t *s, voice_t *vc) {
     vc->gate = 0;
     if (s->sustain) { vc->pedal = 1; return; }
-    for (int e = 0; e < 4; e++) vc->est[e] = E_REL;
+    env_release(vc);
 }
 
 static void all_off(ph_t *s, int hard) {
@@ -292,7 +313,7 @@ static void all_off(ph_t *s, int hard) {
         voice_t *vc = &s->vc[i];
         vc->gate = 0; vc->pedal = 0;
         if (hard) vc->active = 0;
-        else for (int e = 0; e < 4; e++) vc->est[e] = E_REL;
+        else env_release(vc);
     }
     s->nstack = 0;
 }
@@ -351,8 +372,24 @@ static void note_off(ph_t *s, int note) {
 }
 
 /* ---------------- LFOs ---------------- */
-static float lfo_value(int shape, float ph, float ra, float rb) {
+/* a Custom LFO: n points around one cycle; segment i runs from point i to point i+1 (the last one back to point 0 at
+ * the end of the cycle) along point i's curve */
+static void pts_prep(pts_t *p) {   /* after any change to the points: the curves' constants, so evaluating needs one expf */
+    for (int i = 0; i < p->n; i++) { p->k[i] = p->c[i] * 8; p->kn[i] = curve_norm(p->k[i]); }
+}
+
+static float pts_eval(const pts_t *p, float ph) {
+    int i = p->n - 1;
+    for (int k = 1; k < p->n; k++)
+        if (ph < p->t[k]) { i = k - 1; break; }
+    float t0 = p->t[i], t1 = i + 1 < p->n ? p->t[i + 1] : 1, v0 = p->v[i], v1 = i + 1 < p->n ? p->v[i + 1] : p->v[0];
+    float u = t1 > t0 ? clampf((ph - t0) / (t1 - t0), 0, 1) : 0;
+    return v0 + (v1 - v0) * curve_at(u, p->k[i], p->kn[i]);
+}
+
+static float lfo_value(ph_t *s, int l, int shape, float ph, float ra, float rb) {
     switch (shape) {
+    case LS_CUSTOM: return pts_eval(&s->pts[l], ph);
     case LS_SINE: return fsin(ph);
     case LS_TRIANGLE: return ph < 0.25f ? 4 * ph : ph < 0.75f ? 2 - 4 * ph : 4 * ph - 4;
     case LS_SAW_UP: return 2 * ph - 1;
@@ -398,7 +435,7 @@ static void sources(ph_t *s, voice_t *vc, float *src) {
     for (int e = 0; e < 4; e++) src[SRC_ENV_1 + e] = vc->env[e];
     for (int l = 0; l < 4; l++) {
         int mode = (int)s->v[P_L1_MODE + 6 * l];
-        float val = mode == 0 ? s->glval[l] : lfo_value((int)s->v[P_L1_SHAPE + 6 * l], vc->lph[l], vc->lra[l], vc->lrb[l]);
+        float val = mode == 0 ? s->glval[l] : lfo_value(s, l, (int)s->v[P_L1_SHAPE + 6 * l], vc->lph[l], vc->lra[l], vc->lrb[l]);
         src[SRC_LFO_1 + l] = val * vc->lrise[l];
     }
     src[SRC_VELOCITY] = vc->vel;
@@ -545,17 +582,31 @@ static void filter_run(ph_t *s, voice_t *vc, float *bl, float *br, int n, float 
 }
 
 /* ---------------- one voice: control tick, then n samples ---------------- */
-static void env_tick(ph_t *s, voice_t *vc, int e) {
-    float *lv = &vc->env[e];
+/* one envelope, dt seconds on: attack from where it was to 1, hold, decay to sustain, release from where it was to 0, each
+ * stage over its own time along its own curve */
+static void env_tick(ph_t *s, voice_t *vc, int e, float dt) {
+    float *lv = &vc->env[e], *t = &vc->et[e], S = s->esus[e];
     switch (vc->est[e]) {
     case E_ATT:
-        *lv += (1.3f - *lv) * s->ecoef[e][0];
-        if (*lv >= 1) { *lv = 1; vc->est[e] = E_DEC; }
+        *t += dt * s->einv[e][0];
+        if (*t >= 1) { *lv = 1; *t = 0; vc->est[e] = s->einv[e][1] > 0 ? E_HOLD : E_DEC; }
+        else *lv = vc->efrom[e] + (1 - vc->efrom[e]) * curve_at(*t, s->ek[e][0], s->enorm[e][0]);
         break;
-    case E_DEC: *lv += (s->esus[e] - *lv) * s->ecoef[e][1]; break;
+    case E_HOLD:
+        *lv = 1;
+        *t += dt * s->einv[e][1];
+        if (*t >= 1 || s->einv[e][1] <= 0) { *t = 0; vc->est[e] = E_DEC; }
+        break;
+    case E_DEC:
+        *t += dt * s->einv[e][2];
+        if (*t >= 1) { *lv = S; vc->est[e] = E_SUS; }
+        else *lv = 1 + (S - 1) * curve_at(*t, s->ek[e][1], s->enorm[e][1]);
+        break;
+    case E_SUS: *lv += (S - *lv) * 0.2f; break;   /* follows a sustain change without a jump */
     case E_REL:
-        *lv -= *lv * s->ecoef[e][2];
-        if (*lv < 1e-4f) { *lv = 0; vc->est[e] = E_IDLE; }
+        *t += dt * s->einv[e][3];
+        if (*t >= 1) { *lv = 0; vc->est[e] = E_IDLE; }
+        else *lv = vc->efrom[e] * (1 - curve_at(*t, s->ek[e][2], s->enorm[e][2]));
         break;
     default: *lv = 0;
     }
@@ -697,7 +748,7 @@ static inline float blep(float t, float dt) {
 static void voice_tick(ph_t *s, voice_t *vc, int n) {
     const float *v = s->v;
     float dt = n / SR;
-    for (int e = 0; e < 4; e++) env_tick(s, vc, e);
+    for (int e = 0; e < 4; e++) env_tick(s, vc, e, dt);
     for (int l = 0; l < 4; l++) {
         int mode = (int)v[P_L1_MODE + 6 * l];
         if (mode > 0) lfo_step(&vc->lph[l], &vc->lra[l], &vc->lrb[l], lfo_hz(s, l) * exp2f(vc->lrate_mod[l] * 4) * dt,
@@ -847,11 +898,238 @@ static void voice_render(ph_t *s, voice_t *vc, int n, float *L, float *R) {
     if (vc->est[0] == E_IDLE && !vc->gate) vc->active = 0;
 }
 
-/* ---------------- engine interface ---------------- */
+/* ---------------- the curve editors ---------------- */
+#ifndef PH_DISP_FRAMES
+#define PH_DISP_FRAMES 2205   /* the displays are recomputed at most every 50 ms, and only after a change */
+#endif
+
+static void mark(ph_t *s, int p) { if (p >= 0 && p < NP && !s->chg[p]) { s->chg[p] = 1; s->chg_n++; } }
+
+static void pts_set(pts_t *p, int n, const float *t, const float *v, const float *c) {
+    p->n = n;
+    for (int i = 0; i < n; i++) { p->t[i] = t[i]; p->v[i] = v[i]; p->c[i] = c ? c[i] : 0; }
+    pts_prep(p);
+}
+static void pts_default(pts_t *p) {   /* a triangle */
+    static const float t[2] = {0, 0.5f}, v[2] = {-1, 1};
+    pts_set(p, 2, t, v, NULL);
+}
+
+/* the points that draw a built-in shape (S&H and Smooth: a fixed pattern of their kind) */
+static void shape_to_points(ph_t *s, int l) {
+    pts_t *p = &s->pts[l];
+    int shape = (int)s->v[P_L1_SHAPE + 6 * l];
+    float t[MAX_POINTS], v[MAX_POINTS];
+    unsigned seed = 0x9E3779B9u * (unsigned)(l + 1);
+    switch (shape) {
+    case LS_SINE:
+        for (int i = 0; i < 16; i++) { t[i] = i / 16.0f; v[i] = fsin(t[i]); }
+        pts_set(p, 16, t, v, NULL);
+        break;
+    case LS_TRIANGLE: { float tt[3] = {0, 0.25f, 0.75f}, vv[3] = {0, 1, -1}; pts_set(p, 3, tt, vv, NULL); break; }
+    case LS_SAW_UP: { float tt[2] = {0, 0.995f}, vv[2] = {-1, 1}; pts_set(p, 2, tt, vv, NULL); break; }
+    case LS_SAW_DOWN: { float tt[2] = {0, 0.995f}, vv[2] = {1, -1}; pts_set(p, 2, tt, vv, NULL); break; }
+    case LS_SQUARE: { float tt[4] = {0, 0.495f, 0.5f, 0.995f}, vv[4] = {1, 1, -1, -1}; pts_set(p, 4, tt, vv, NULL); break; }
+    case LS_PUMP: { float tt[2] = {0, 0.995f}, vv[2] = {-1, 1}, cc[2] = {0.75f, 0}; pts_set(p, 2, tt, vv, cc); break; }
+    case LS_EXP_UP: { float tt[2] = {0, 0.995f}, vv[2] = {-1, 1}, cc[2] = {-0.6f, 0}; pts_set(p, 2, tt, vv, cc); break; }
+    case LS_STAIRS: case LS_SNH:
+        for (int k = 0; k < 8; k++) {
+            float lv = shape == LS_STAIRS ? (k / 2) * (2.0f / 3) - 1 : rand_bi(&seed);
+            t[2 * k] = k / 8.0f; t[2 * k + 1] = k / 8.0f + 0.12f; v[2 * k] = v[2 * k + 1] = lv;
+        }
+        pts_set(p, 16, t, v, NULL);
+        break;
+    case LS_SMOOTH:
+        for (int k = 0; k < 8; k++) { t[k] = k / 8.0f; v[k] = rand_bi(&seed); }
+        pts_set(p, 8, t, v, NULL);
+        break;
+    default: break;   /* Custom: already points */
+    }
+}
+
+static int ev_real(ph_t *s, int p) {   /* the envelope parameter an ENV editor control stands in for */
+    int e = (int)s->v[P_EV_SEL];
+    switch (p) {
+    case P_EV_A: return P_E1_A + 4 * e;
+    case P_EV_D: return P_E1_D + 4 * e;
+    case P_EV_S: return P_E1_S + 4 * e;
+    case P_EV_R: return P_E1_R + 4 * e;
+    case P_EV_H: return P_E1_H + 4 * e;
+    case P_EV_AC: return P_E1_AC + 4 * e;
+    case P_EV_DC: return P_E1_DC + 4 * e;
+    case P_EV_RC: return P_E1_RC + 4 * e;
+    }
+    return -1;
+}
+static int ev_proxy_of(ph_t *s, int p) {   /* the reverse: an envelope parameter of the edited envelope -> its editor control */
+    int e = (int)s->v[P_EV_SEL];
+    static const int A[4] = {P_EV_A, P_EV_D, P_EV_S, P_EV_R}, B[4] = {P_EV_H, P_EV_AC, P_EV_DC, P_EV_RC};
+    if (p >= P_E1_A && p <= P_E4_R && (p - P_E1_A) / 4 == e) return A[(p - P_E1_A) % 4];
+    if (p >= P_E1_H && p <= P_E4_RC && (p - P_E1_H) / 4 == e) return B[(p - P_E1_H) % 4];
+    return -1;
+}
+static int lv_point(ph_t *s) {   /* the edited point, 0-based, within the edited LFO's points */
+    const pts_t *pt = &s->pts[(int)s->v[P_LV_SEL]];
+    int i = (int)s->v[P_LV_PT] - 1;
+    return i < 0 ? 0 : i >= pt->n ? pt->n - 1 : i;
+}
+static void mark_lfo_editor(ph_t *s) {
+    mark(s, P_LV_SHAPE); mark(s, P_LV_PT); mark(s, P_LV_PTT); mark(s, P_LV_PTL); mark(s, P_LV_PTC);
+    s->disp_dirty |= 2;
+}
+
+/* a parameter's value, the editor controls answering for the parameter they stand in for */
+static float value_of(ph_t *s, int p) {
+    int r = ev_real(s, p);
+    if (r >= 0) return s->v[r];
+    int l = (int)s->v[P_LV_SEL];
+    const pts_t *pt = &s->pts[l];
+    switch (p) {
+    case P_LV_SHAPE: return s->v[P_L1_SHAPE + 6 * l];
+    case P_LV_PT: return (float)(lv_point(s) + 1);
+    case P_LV_PTT: return pt->t[lv_point(s)] * 100;
+    case P_LV_PTL: return pt->v[lv_point(s)] * 100;
+    case P_LV_PTC: return pt->c[lv_point(s)] * 100;
+    }
+    return s->v[p];
+}
+
 static void set_value(ph_t *s, int p, float x);
 
+static void to_custom(ph_t *s, int l) {   /* editing a point makes the LFO Custom, starting from the shape it had */
+    int sp = P_L1_SHAPE + 6 * l;
+    if ((int)s->v[sp] == LS_CUSTOM) return;
+    shape_to_points(s, l);
+    s->v[sp] = LS_CUSTOM;
+    mark(s, sp);
+    mark_lfo_editor(s);
+    s->dirty = 1;
+}
+
+static void point_edit(ph_t *s, int p, float x) {
+    int l = (int)s->v[P_LV_SEL], i = lv_point(s);
+    to_custom(s, l);
+    pts_t *pt = &s->pts[l];
+    if (p == P_LV_PTT) {
+        if (i == 0) pt->t[0] = 0;   /* the first point starts the cycle */
+        else {
+            float lo = pt->t[i - 1] + 0.002f, hi = (i + 1 < pt->n ? pt->t[i + 1] : 1) - 0.002f;
+            pt->t[i] = clampf(x / 100, lo, hi > lo ? hi : lo);
+        }
+    } else if (p == P_LV_PTL) pt->v[i] = clampf(x / 100, -1, 1);
+    else pt->c[i] = clampf(x / 100, -1, 1);
+    pts_prep(pt);
+    mark(s, p);
+    s->disp_dirty |= 2;
+}
+
+static void point_action(ph_t *s, int p) {
+    int l = (int)s->v[P_LV_SEL], i = lv_point(s);
+    pts_t *pt = &s->pts[l];
+    if (p == P_LV_TOPTS) { to_custom(s, l); mark_lfo_editor(s); return; }
+    to_custom(s, l);
+    if (p == P_LV_ADD) {   /* a new point halfway to the next one (or, with no room there, to the one before), on the curve */
+        if (pt->n >= MAX_POINTS) return;
+        float t1 = i + 1 < pt->n ? pt->t[i + 1] : 1;
+        int at = i + 1;
+        if (t1 - pt->t[i] < 0.006f) {
+            if (i == 0 || pt->t[i] - pt->t[i - 1] < 0.006f) return;
+            at = i;
+            t1 = pt->t[i];
+        }
+        float t0 = pt->t[at - 1], tm = 0.5f * (t0 + t1), vm = pts_eval(pt, tm);
+        for (int k = pt->n; k > at; k--) { pt->t[k] = pt->t[k - 1]; pt->v[k] = pt->v[k - 1]; pt->c[k] = pt->c[k - 1]; }
+        pt->t[at] = tm; pt->v[at] = vm; pt->c[at] = 0;
+        pt->n++;
+        pts_prep(pt);
+        s->v[P_LV_PT] = (float)(at + 1);
+    } else if (p == P_LV_DEL) {   /* never the first point, never below two */
+        if (pt->n <= 2 || i == 0) return;
+        for (int k = i; k < pt->n - 1; k++) { pt->t[k] = pt->t[k + 1]; pt->v[k] = pt->v[k + 1]; pt->c[k] = pt->c[k + 1]; }
+        pt->n--;
+        pts_prep(pt);
+        s->v[P_LV_PT] = (float)i;
+    }
+    mark_lfo_editor(s);
+}
+
+/* ---------------- displays: the edited envelope and LFO as DISP_COLS bars of DISP_LEVELS heights ---------------- */
+static void disp_env(ph_t *s, float *col) {
+    int e = (int)s->v[P_EV_SEL], b = P_E1_A + 4 * e, hb = P_E1_H + 4 * e;
+    const float *v = s->v;
+    /* stage widths: the square root of each time (short attacks stay visible beside long releases); sustain a fixed share */
+    float w[5] = {sqrtf(map_etime(v[b]) + 0.002f), v[hb] > 0 ? sqrtf(map_etime(v[hb])) : 0, sqrtf(map_etime(v[b + 1]) + 0.002f),
+                  0, sqrtf(map_etime(v[b + 3]) + 0.002f)};
+    w[3] = 0.25f * (w[0] + w[1] + w[2] + w[4]);
+    float tot = w[0] + w[1] + w[2] + w[3] + w[4], S = v[b + 2] / 100;
+    float k[3], nk[3];
+    for (int c = 0; c < 3; c++) { k[c] = v[hb + 1 + c] * 0.08f; nk[c] = curve_norm(k[c]); }
+    for (int i = 0; i < DISP_COLS; i++) {
+        float x = (i + 0.5f) / DISP_COLS * tot, lv = 0;
+        int st = 0;
+        while (st < 4 && x > w[st]) { x -= w[st]; st++; }
+        float u = w[st] > 0 ? clampf(x / w[st], 0, 1) : 1;
+        switch (st) {
+        case 0: lv = curve_at(u, k[0], nk[0]); break;
+        case 1: lv = 1; break;
+        case 2: lv = 1 + (S - 1) * curve_at(u, k[1], nk[1]); break;
+        case 3: lv = S; break;
+        default: lv = S * (1 - curve_at(u, k[2], nk[2]));
+        }
+        col[i] = clampf(lv, 0, 1);
+    }
+}
+
+static void disp_lfo(ph_t *s, float *col) {
+    int l = (int)s->v[P_LV_SEL], shape = (int)s->v[P_L1_SHAPE + 6 * l];
+    unsigned seed = 0x9E3779B9u * (unsigned)(l + 1);
+    float r[9];
+    for (int k = 0; k < 9; k++) r[k] = rand_bi(&seed);
+    r[8] = r[0];
+    for (int i = 0; i < DISP_COLS; i++) {
+        float ph = (i + 0.5f) / DISP_COLS, y;
+        if (shape == LS_SNH) y = r[(int)(ph * 8)];
+        else if (shape == LS_SMOOTH) { int k = (int)(ph * 8); float u = ph * 8 - k; y = r[k] + (r[k + 1] - r[k]) * (0.5f - 0.5f * fsin(u * 0.5f + 0.25f)); }
+        else y = lfo_value(s, l, shape, ph, 0, 0);
+        col[i] = clampf(0.5f + 0.5f * y, 0, 1);
+    }
+}
+
+static void disp_update(ph_t *s) {
+    float col[DISP_COLS];
+    for (int d = 0; d < 2; d++) {
+        if (!(s->disp_dirty & (1 << d))) continue;
+        if (d == 0) disp_env(s, col); else disp_lfo(s, col);
+        int base = d == 0 ? P_ENVD_1 : P_LFOD_1;
+        for (int i = 0; i < DISP_COLS; i++) {
+            float q = roundf(col[i] * (DISP_LEVELS - 1));
+            if (q != s->v[base + i]) { s->v[base + i] = q; mark(s, base + i); }
+        }
+    }
+    s->disp_dirty = 0;
+}
+
+/* the wrapper asks once per block for what the engine changed by itself (engine.h), one key per call */
+int mpc_engine_changed(void *inst, char *key, int len) {
+    ph_t *s = inst;
+    if (!s->chg_n) return 0;   /* every block asks: nothing to look through most of the time */
+    for (int k = 0; k < NP; k++) {
+        int p = (s->chg_cur + k) % NP;
+        if (!s->chg[p]) continue;
+        s->chg[p] = 0;
+        s->chg_n--;
+        s->chg_cur = (p + 1) % NP;
+        snprintf(key, len, "%s", PH_P[p].key);
+        return 1;
+    }
+    return 0;
+}
+
+/* ---------------- engine interface ---------------- */
 static void defaults(ph_t *s) {
     for (int p = 0; p < NP; p++) s->v[p] = PH_P[p].def;
+    for (int l = 0; l < 4; l++) pts_default(&s->pts[l]);
+    s->disp_dirty = 3;
     for (int k = 0; k < FX_SLOTS; k++) if (s->fx[k].type != FX_OFF) fx_prepare(&s->fx[k], FX_OFF);
     s->dirty = 1;
 }
@@ -908,7 +1186,7 @@ static void midi(void *p, const uint8_t *m, int len) {
             s->sustain = d2 >= 64;
             if (!s->sustain)
                 for (int i = 0; i < MAXV; i++)
-                    if (s->vc[i].pedal) { s->vc[i].pedal = 0; for (int e = 0; e < 4; e++) s->vc[i].est[e] = E_REL; }
+                    if (s->vc[i].pedal) { s->vc[i].pedal = 0; env_release(&s->vc[i]); }
             break;
         case 120: all_off(s, 1); break;
         case 121: s->modwheel = 0; s->expr = 1; s->bend = 0; s->chan_at = 0; memset(s->polyat, 0, sizeof s->polyat); break;
@@ -920,8 +1198,13 @@ static void midi(void *p, const uint8_t *m, int len) {
 
 static void set_value(ph_t *s, int p, float x) {
     const ph_pdef_t *d = &PH_P[p];
-    if (x != x) return;
+    if (x != x || (d->flags & PF_DISPLAY)) return;   /* the displays belong to the engine */
     x = clampf(x, d->min, d->max);
+    int r = ev_real(s, p);
+    if (r >= 0) { set_value(s, r, x); mark(s, r); return; }
+    if (p == P_LV_SHAPE) { int sp = P_L1_SHAPE + 6 * (int)s->v[P_LV_SEL]; set_value(s, sp, roundf(x)); mark(s, sp); return; }
+    if (p == P_LV_PTT || p == P_LV_PTL || p == P_LV_PTC) { point_edit(s, p, x); return; }
+    if (p == P_LV_ADD || p == P_LV_DEL || p == P_LV_TOPTS) { if (x > 0.5f) point_action(s, p); return; }
     if (d->integer) x = roundf(x);
     if ((p == P_A_TABLE || p == P_B_TABLE) && x >= WT_NB) {   /* only as far as the library goes */
         int last = WT_NB + lib_count(s->lib) - 1;
@@ -933,6 +1216,19 @@ static void set_value(ph_t *s, int p, float x) {
     if (p >= P_FX1_TYPE && p <= P_FX8_MIX && (p - P_FX1_TYPE) % 5 == 0) {
         int k = (p - P_FX1_TYPE) / 5;
         if (s->fx[k].type != (int)x) fx_prepare(&s->fx[k], (int)x);   /* allocation here, off the audio thread */
+    }
+    /* the editors follow */
+    if (p == P_EV_SEL) { for (int q = P_EV_A; q <= P_EV_RC; q++) mark(s, q); s->disp_dirty |= 1; }
+    int pr = ev_proxy_of(s, p);
+    if (pr >= 0) mark(s, pr);
+    if ((p >= P_E1_A && p <= P_E4_R) || (p >= P_E1_H && p <= P_E4_RC)) s->disp_dirty |= 1;
+    if (p == P_LV_SEL || p == P_LV_PT) {
+        if (p == P_LV_PT && (int)x - 1 != lv_point(s)) s->v[p] = (float)(lv_point(s) + 1);   /* only as far as the points go */
+        mark_lfo_editor(s);
+    }
+    if (p >= P_L1_SHAPE && p <= P_L4_PHASE && (p - P_L1_SHAPE) % 6 == 0) {
+        if ((p - P_L1_SHAPE) / 6 == (int)s->v[P_LV_SEL]) mark(s, P_LV_SHAPE);
+        s->disp_dirty |= 2;
     }
     s->dirty = 1;
 }
@@ -948,7 +1244,24 @@ static void state_set(ph_t *s, const char *str) {
         if (!eq) break;
         const char *end = strchr(eq, ';');
         size_t vl = end ? (size_t)(end - eq - 1) : strlen(eq + 1);
-        if (!strncmp(q, "a_tfile=", 8) || !strncmp(q, "b_tfile=", 8)) {
+        if (q[0] == 'l' && q[1] >= '1' && q[1] <= '4' && !strncmp(q + 2, "_pts=", 5)) {   /* LFO points: t,v,c/t,v,c/... */
+            pts_t *pt = &s->pts[q[1] - '1'];
+            const char *r = eq + 1, *stop = eq + 1 + vl;
+            int n = 0;
+            while (r < stop && n < MAX_POINTS) {
+                char *e2;
+                float t = strtof(r, &e2); if (*e2 != ',') break; r = e2 + 1;
+                float v = strtof(r, &e2); if (*e2 != ',') break; r = e2 + 1;
+                float c = strtof(r, &e2); r = e2;
+                pt->t[n] = clampf(t, 0, 0.999f); pt->v[n] = clampf(v, -1, 1); pt->c[n] = clampf(c, -1, 1);
+                if (n == 0) pt->t[0] = 0;
+                if (n > 0 && pt->t[n] <= pt->t[n - 1]) pt->t[n] = pt->t[n - 1] + 0.001f;
+                n++;
+                if (*r == '/') r++; else break;
+            }
+            if (n >= 2) { pt->n = n; pts_prep(pt); } else pts_default(pt);
+            s->disp_dirty |= 2;
+        } else if (!strncmp(q, "a_tfile=", 8) || !strncmp(q, "b_tfile=", 8)) {
             int o = q[0] == 'b';
             snprintf(s->pend_name[o], sizeof s->pend_name[o], "%.*s", (int)vl, eq + 1);
         } else {
@@ -988,7 +1301,7 @@ static int fmt_hz(char *b, int n, float hz) {
 }
 
 static int display(ph_t *s, int p, char *b, int n) {
-    float x = s->v[p];
+    float x = value_of(s, p);
     switch (PH_P[p].fmt) {
     case F_PCT: return snprintf(b, n, "%.0f%%", x);
     case F_BIP: return snprintf(b, n, "%+.0f", x);
@@ -1007,6 +1320,8 @@ static int display(ph_t *s, int p, char *b, int n) {
         return fmt_hz(b, n, map_lrate(x));
     }
     case F_RISE: return x <= 0 ? snprintf(b, n, "Off") : fmt_time(b, n, map_rise(x));
+    case F_HOLD: return x <= 0 ? snprintf(b, n, "Off") : fmt_time(b, n, map_etime(x));
+    case F_PTNUM: return snprintf(b, n, "%.0f / %d", x, s->pts[(int)s->v[P_LV_SEL]].n);
     case F_GLIDE: return x <= 0 ? snprintf(b, n, "Off") : fmt_time(b, n, map_glide(x));
     case F_PAN: return x == 0 ? snprintf(b, n, "C") : snprintf(b, n, "%c%.0f", x < 0 ? 'L' : 'R', fabsf(x));
     case F_TABLE: {
@@ -1029,7 +1344,12 @@ static int get_param(void *p, const char *key, char *buf, int n) {
     if (!strcmp(key, "state")) {
         int o = snprintf(buf, n, "ph1");
         for (int i = 0; i < NP && o < n - 1; i++)
-            o += snprintf(buf + o, n - o, ";%s=%.6g", PH_P[i].key, s->v[i]);
+            if (!(PH_P[i].flags & PF_VIRTUAL)) o += snprintf(buf + o, n - o, ";%s=%.5g", PH_P[i].key, s->v[i]);
+        for (int l = 0; l < 4 && o < n - 1; l++) {
+            o += snprintf(buf + o, n - o, ";l%d_pts=", l + 1);
+            for (int i = 0; i < s->pts[l].n && o < n - 1; i++)
+                o += snprintf(buf + o, n - o, "%s%.4g,%.3g,%.3g", i ? "/" : "", s->pts[l].t[i], s->pts[l].v[i], s->pts[l].c[i]);
+        }
         for (int k = 0; k < 2 && o < n - 1; k++) {   /* user tables by file name too */
             int u = user_index(s, k);
             const char *rel = lib_path(s->lib, u);
@@ -1051,8 +1371,9 @@ static int get_param(void *p, const char *key, char *buf, int n) {
     }
     int id = find_param(key, len);
     if (id < 0) return 0;
-    if (PH_P[id].integer) return snprintf(buf, n, "%d", (int)s->v[id]);
-    return snprintf(buf, n, "%.6g", s->v[id]);
+    float x = value_of(s, id);
+    if (PH_P[id].integer) return snprintf(buf, n, "%d", (int)x);
+    return snprintf(buf, n, "%.6g", x);
 }
 
 static void render(void *p, int16_t *out, int frames) {
@@ -1061,6 +1382,8 @@ static void render(void *p, int16_t *out, int frames) {
     fpmode_t fm = fp_enter();
     if (s->dirty) derive(s);
     pickup_tables(s);
+    if (s->disp_wait > 0) s->disp_wait -= frames;
+    if (s->disp_dirty && s->disp_wait <= 0) { disp_update(s); s->disp_wait = PH_DISP_FRAMES; }
     memset(s->mixL, 0, sizeof(float) * frames);
     memset(s->mixR, 0, sizeof(float) * frames);
     for (int pos = 0; pos < frames; pos += CR) {
@@ -1070,7 +1393,7 @@ static void render(void *p, int16_t *out, int frames) {
             int done = 0;
             lfo_step(&s->glph[l], &s->glra[l], &s->glrb[l], lfo_hz(s, l) * dt, &s->seed, 0, &done);
             float ph = s->glph[l] + s->v[P_L1_PHASE + 6 * l] / 360;
-            s->glval[l] = lfo_value((int)s->v[P_L1_SHAPE + 6 * l], ph - floorf(ph), s->glra[l], s->glrb[l]);
+            s->glval[l] = lfo_value(s, l, (int)s->v[P_L1_SHAPE + 6 * l], ph - floorf(ph), s->glra[l], s->glrb[l]);
         }
         for (int i = 0; i < MAXV; i++) {
             voice_t *vc = &s->vc[i];

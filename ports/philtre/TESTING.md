@@ -29,6 +29,7 @@
 | Engine | `test/test_states.c` (run by `test/run.sh`, ASan/UBSan) | PASSED: each converted state loads and saves back with the same values and points; a 4-note chord is heard and stays finite; a missing table file keeps the named built-in |
 | Real files | 7 `.SerumPreset` test files from open-source Serum 2 tools (Serum 2.0.17-2.1.4; not in this repo), then `test_states` on the results | all decoded and converted (2.2-2.4 kB states); sample and multisample oscillators reported; each played (peak 0.37-0.89) |
 | Host test x86, builds | as for 0.1.0 | PASSED; armv7 and aarch64 without warnings, glibc 2.29 / 2.34 |
+| Calibration (Serum 2.0.16) | presets saved from Init with one change: LFO 1 at 1/8, 1 bar, 1 Hz free; eight matrix slots (Macro 1, Macro 2, Velo, Note#, Aftertouch, Poly Aftertch, Pitch Bend, Mod Wheel); Init's LFO read in Hz mode (6.2 Hz) | the LFO rates and source numbers now in the converter; each of these converts to the same division / Hz / source (not kept in the repo) |
 
 To calibrate a `[g]` unit: in Serum 2, save Init, then the same with one control moved to a known value (e.g. an LFO at
 1/8, or Osc A level at 50 %); `serum2_import.py --dump` both and compare the field, then fix the constant in the converter.

@@ -98,8 +98,9 @@ file's name stands in. An upgrade of Philtre replaces the plugin folder except `
   Reverb or Plate, Chorus, Flanger, Phaser, EQ, Filter).
 - **Left out, listed in `out/import-report.txt` with "x":** a third oscillator, sample, granular and spectral oscillators
   (a built-in table plays), a wavetable stored inside the preset, the second warp, filter 2 when both are on, LFOs past
-  four and the chaos LFOs (a smooth random LFO plays), matrix sources the converter does not know (the report gives the
-  number: `--source 25="Macro 1"` names it), slot curves, the arpeggiator and clips, effect racks 2 and 3, and effects
+  four and the chaos LFOs (a smooth random LFO plays), matrix sources the converter does not know (it knows the mod
+  wheel, envelopes, LFOs, velocity, note, aftertouch, poly aftertouch, macros and pitch bend; the report gives the number
+  of any other, and `--source 21=Random` names it), slot curves, the arpeggiator and clips, effect racks 2 and 3, and effects
   Philtre has no counterpart for.
 - **Accuracy:** unison, detune, wavetable position, cutoff, resonance, envelope times and sustain convert with units
   measured on Serum 2.1.5 (published by the serum2-preset-loader project, MIT). A free LFO rate is in Hz and a synced

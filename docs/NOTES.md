@@ -2176,7 +2176,9 @@ Findings that apply to other ports:
   a uint64 LE JSON length and a JSON header, a uint32 LE decompressed size, a uint32 LE format version 2, then Zstandard
   CBOR. A module's `plainParams` keeps only what differs from Serum's defaults (or the string `"default"`), so a converter
   needs Serum's defaults: the measured ones come from serum2-preset-loader (MIT; a DawDreamer probe of 2.1.5). Still
-  unknown here: matrix source numbers past 15 (1 mod wheel, 2-5 envelopes, 6-15 LFOs). Serum 2's Init screen shows the
+  unknown here: matrix sources 20-24 and past 33 (known: 1 mod wheel, 2-5 envelopes, 6-15 LFOs, 16 velocity, 17 note,
+  18 aftertouch, 19 poly aftertouch, 25-26 macros 1-2 (3-8 taken to follow), 33 pitch bend). Serum 2's Init screen shows the
   defaults (osc A only into filter 1, MG Low 12, LFOs Retrig at 1/4 synced, 8 voices). Presets saved from Init with one
   change (Serum 2.0.16): a free LFO rate is stored in Hz (1.0 Hz -> 1.0068); synced, the same field picks the division
-  (1/8 -> 10.66, 1 bar -> 1.627; the knob snaps, so a division is a range), fitted as beats = 6 / stored; the converter takes `--source N=NAME` and reports what it could not place.
+  (1/8 -> 10.66, 1 bar -> 1.627, and Init's 1/4 shows 6.2 Hz in Hz mode; the knob snaps, so a division is a range),
+  fitted as beats = 6 / stored; the converter takes `--source N=NAME` and reports what it could not place.

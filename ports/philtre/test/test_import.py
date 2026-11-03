@@ -162,9 +162,9 @@ def main():
                       "destModuleParamName": "kParamTablePos", "plainParams": {"kParamAmount": 30.0, "kParamBipolar": 1.0}}
     t2["ModSlot2"] = {"source": [8, 0], "destModuleTypeString": "Oscillator", "destModuleID": 0,
                       "destModuleParamName": "kParamPan", "plainParams": {"kParamAmount": 20.0, "kParamBipolar": 1.0}}
-    t2["ModSlot3"] = {"source": [30, 0], "destModuleTypeString": "VoiceFilter", "destModuleID": 0,
+    t2["ModSlot3"] = {"source": [22, 0], "destModuleTypeString": "VoiceFilter", "destModuleID": 0,
                       "destModuleParamName": "kParamReso", "plainParams": {"kParamAmount": 50.0}}
-    t2["ModSlot4"] = {"source": [16, 0], "destModuleTypeString": "VoiceFilter", "destModuleID": 0,
+    t2["ModSlot4"] = {"source": [23, 0], "destModuleTypeString": "VoiceFilter", "destModuleID": 0,
                       "destModuleParamName": "kParamDrive", "plainParams": {"kParamAmount": 10.0}}
     t2["FXRack0"]["FX"] = [
         {"type": 0, "FXDistortion": {"plainParams": {"kParamDrive": 60.0, "kParamMode": "kDiode2", "kParamWet": 80.0}}},
@@ -188,6 +188,7 @@ def main():
     t3["ModSlot6"] = {"source": [1, 0], "destModuleTypeString": "Env", "destModuleID": 0,
                       "destModuleParamName": "kParamAttack", "plainParams": {"kParamAmount": 10.0}}
     t3["Macro2"] = {"name": "WIDE", "plainParams": {"kParamValue": 70.0}}
+    t3["Macro0"] = {"name": "M1", "plainParams": {"kParamValue": 55.0}}
     t3["LFO1"]["plainParams"] = {"kParamBeatSync": 0.0, "kParamRate": 1.0068}
     t3["LFO2"]["plainParams"] = {"kParamRate": 1.627}
 
@@ -204,7 +205,7 @@ def main():
 
     out = os.path.join(tmp, "out")
     r = subprocess.run([sys.executable, os.path.join(HERE, "..", "tools", "serum2_import.py"), "-o", out, "-q",
-                        "--tables", os.path.join(tmp, "Tables"), "--source", "16=Velocity", src],
+                        "--tables", os.path.join(tmp, "Tables"), "--source", "23=Velocity", src],
                        capture_output=True, text=True)
     check(r.returncode == 0, "the converter runs (%s)" % (r.stderr.strip()[-300:] or "exit 0"))
     report = open(os.path.join(out, "import-report.txt"), encoding="utf-8").read()
@@ -261,9 +262,9 @@ def main():
     check(m[2][:2] == ("Env 2", "A Pos") and abs(m[2][2] - 30) < 0.01, "slot 2: bipolar Env 2 -> A Pos, full amount")
     check(near(v2["a_pos"], 50 - 15, 0.1), "and the bipolar envelope lowers the position by half (%s)" % v2["a_pos"])
     check(m[3][:2] == ("LFO 1", "A Pan") and abs(m[3][2] - 20) < 0.01, "slot 3: bipolar LFO -> pan (range 200)")
-    check(m[4][:2] == ("Velocity", "Drive") and abs(m[4][2] - 10) < 0.01, "slot 4: --source 16=Velocity")
+    check(m[4][:2] == ("Velocity", "Drive") and abs(m[4][2] - 10) < 0.01, "slot 4: --source 23=Velocity")
     check(m[5][0] == "Off", "no more slots")
-    check("Serum source #30 not known" in report, "an unknown source is named in the report")
+    check("Serum source #22 not known" in report, "an unknown source is named in the report")
     fx = [(o("fx%d_type" % i), v2["fx%d_mix" % i]) for i in range(1, 9)]
     check([f[0] for f in fx[:4]] == ["Distortion", "Delay", "Reverb", "Off"], "effects in order, Bode left out: %s" % fx[:4])
     check(int(float(v2["fx1_p2"]) / 100 * 9) == 3 and near(v2["fx1_p1"], 60) and near(v2["fx2_p2"], 45),
@@ -277,14 +278,16 @@ def main():
     check(v3["a_on"] == "1" and v3["b_on"] == "1" and "oscillators B and C play on Philtre's A and B" in report,
           "osc A off: B and C play on Philtre's A and B")
     check("Granular oscillator" in report, "a granular oscillator is reported")
-    check([o3("m%d_src" % i) for i in range(1, 6)] == ["LFO 1", "LFO 2", "LFO 3", "LFO 4", "Off"] and
+    check([o3("m%d_src" % i) for i in range(1, 7)] == ["LFO 1", "LFO 2", "LFO 3", "LFO 4", "Macro 1", "Off"] and
           "LFO 5 (Philtre has four LFOs)" in report, "four LFOs kept, the fifth reported")
     check(o3("m1_dst") == "A Pos", "Serum B's position follows it to Philtre's A")
     check(len(v3["l1_pts"].split("/")) == 16, "31 LFO points -> 16")
     check(o3("l2_sync") == "Off" and near(v3["l2_rate"], si.lrate_x(1.0068), 0.01) and o3("l3_sync") == "1/1"
           and o3("l4_sync") == "1/4", "LFO rates: free 1 Hz stays 1 Hz, 1.627 synced is 1 bar, the default is 1/4 (%s %s %s)"
           % (v3["l2_rate"], o3("l3_sync"), o3("l4_sync")))
-    check("source #25 not known" in report and "no such destination" in report, "unknown source and Env destination reported")
+    check(o3("m5_aux") == "LFO 1" and o3("m5_dst") == "B Level" and near(v3["mac1"], 55),
+          "source 25 is Macro 1 (its value carried), aux LFO 1, Serum C's level on Philtre's B")
+    check("no such destination" in report, "an Env destination is reported")
     check("macro 3 (WIDE)" in report, "macro 3 reported")
 
     # unknown --source name refused

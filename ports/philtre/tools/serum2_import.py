@@ -9,7 +9,7 @@ Xfer Records. Runs on a computer, from a checkout of this repository (it reads P
     --tables DIR      your Serum wavetable folder (Serum 2's "Tables"): each table a preset uses is copied to
                       DIR/wavetables/serum2/, and the preset asks Philtre for it by name (a built-in table stands in
                       while the file is not in Philtre's wavetables/ folder)
-    --source ID=NAME  name a Serum mod source by its number (see the report), e.g. --source 25="Macro 1"
+    --source ID=NAME  name a Serum mod source by its number (see the report), e.g. --source 21=Random
     --synths PATH     the MPC's Synths folder, for the .xpl's plugin path (default /sdcard/Synths)
     --dump            print a preset's fields ("path = value") instead of converting it
     -q                no report on the terminal (it is still written to the file)
@@ -202,8 +202,8 @@ PITCH_RANGE_SEMIS = 24.0           # [g] a 100 % pitch modulation of an oscillat
 # synced the same knob value picks the division: 1/8 -> 10.66, 1 bar -> 1.627, so beats ~ LFO_SYNC_K / stored (a fit on
 # two points; the knob snaps, so each division covers a range). [s] the Init LFO is synced at 1/4: the default is put
 # where that fit gives 1/4 [g] (Serum's own default number is not known yet).
-LFO_SYNC_K = 6.0
-LFO_RATE_DEF = LFO_SYNC_K / 1.0
+LFO_SYNC_K = 6.0                   # 1/8 -> 5.3, 1/4 -> 6.2, 1 bar -> 6.5: 6 picks the right one for all three
+LFO_RATE_DEF = 6.2                 # [s] Init's LFO in Hz mode shows 6.2 Hz (1/4 synced)
 
 
 def serum_hz(n):
@@ -213,6 +213,9 @@ def serum_hz(n):
 # mod sources [f]: the numbers of a ModSlot's "source" (and aux) that are known; --source adds more
 SOURCES = {1: "Mod Whl", 2: "Env 1", 3: "Env 2", 4: "Env 3", 5: "Env 4"}
 SOURCES.update({6 + i: "LFO %d" % (i + 1) for i in range(10)})      # Serum's LFO 1-10; four are kept
+# [f] a preset with one slot per source (Serum 2.0.16, 2026-11-03); Macro 3-8 taken to follow Macro 1-2 [g]
+SOURCES.update({16: "Velocity", 17: "Note", 18: "Aftertouch", 19: "Aftertouch", 33: "Bend"})   # 19: poly aftertouch
+SOURCES.update({25 + i: "Macro %d" % (i + 1) for i in range(8)})
 SOURCE_ALIASES = {"modwheel": "Mod Whl", "mod wheel": "Mod Whl", "velo": "Velocity", "vel": "Velocity",
                   "pitchbend": "Bend", "pitch bend": "Bend", "at": "Aftertouch", "noteon": "Note", "key": "Note"}
 

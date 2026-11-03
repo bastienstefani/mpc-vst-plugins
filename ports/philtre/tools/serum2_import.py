@@ -22,7 +22,7 @@ Philtre is not Serum: two wavetable oscillators (Serum has three), one filter (t
 (64), eight effect slots, and its own effects. What has no counterpart is listed in the report ("x"), and what is
 converted with a unit that was not measured is marked "~". The units come from three places, marked in the tables
 below: [m] measured on Serum 2.1.5 (a DawDreamer probe published with serum2-preset-loader, MIT), [f] read off preset
-files, [g] guessed (Serum 1 behaviour or the default lining up). A [g] is a calibration to do: save a Serum preset
+files, [s] seen on Serum 2's Init screen, [g] guessed (Serum 1 behaviour or the default lining up). A [g] is a calibration to do: save a Serum preset
 with only that control moved and compare (TESTING.md says how).
 """
 import json
@@ -198,7 +198,7 @@ FREQ_LO, FREQ_HI = 8.1758, 22050.0   # [m] filter cutoff: stored 0..1 = FREQ_LO 
 CUTOFF_RANGE_SEMIS = 12 * math.log2(FREQ_HI / FREQ_LO)   # 137 semitones: a 100 % cutoff modulation in Serum
 CUTOFF_X_SEMIS = 12 * math.log2(1000)                    # Philtre's cutoff knob spans 120 semitones
 PITCH_RANGE_SEMIS = 24.0           # [g] a 100 % pitch modulation of an oscillator
-LFO_RATE_DEF = 0.625               # [g] synced rate stored 0..1; beats = 32 * 2^(-8 n): 0.625 = 1/4 (the default)
+LFO_RATE_DEF = 0.625               # [s] the Init LFO is synced at 1/4; [g] the stored 0..1, beats = 32 * 2^(-8 n)
 
 
 def serum_hz(n):
@@ -522,7 +522,7 @@ class Converter:
             ph.approx("noise: sample %s -> %s noise" % (sample or "(default)", t) if sample else "noise: White")
             if any("embed" in k.lower() for k in nz):
                 ph.drop("noise: the sample stored inside the preset")
-        # routing [f]: RoutingSlot0..4 = A, B, C, noise, sub; absent = through the filter for A only (as Serum 1)
+        # routing [f]: RoutingSlot0..4 = A, B, C, noise, sub; absent = [s] Init: A through filter 1, the others not
         for slot, (key, osc) in enumerate((("f_ra", 0), ("f_rb", 1), (None, 2), ("f_rn", 3), ("f_rs", 4))):
             dest = str(pp(self.mod("RoutingSlot%d" % slot)).get("kParamRoutingDest", "" if slot else "Filter"))
             through = "filter" in dest.lower()
@@ -553,9 +553,10 @@ class Converter:
         ft = filter_of(ftype) if ftype is not None else None
         if ft:
             ph.set("f_type", ft)
-        else:
+        else:                                                   # [s] Init: MG Low 12
             ph.set("f_type", "MG LP 12")
-            ph.approx("filter type %s -> MG LP 12" % (ftype if ftype is not None else "(default)"))
+            if ftype is not None:
+                ph.approx("filter type %s -> MG LP 12" % ftype)
         if ftype is not None and str(ftype).lower().lstrip("k").startswith("lbh"):
             ph.approx("filter %s (low-band-high morph) -> %s" % (ftype, ft))
         ph.set("f_cut", cutoff_x(serum_hz(num(q, "kParamFreq", 0.5))))                       # [m]
@@ -644,7 +645,7 @@ class Converter:
             if any(abs(c) > 0.01 for _, _, c in pts):
                 ph.approx("LFO %d: curve bend direction [g]" % (l + 1))
         mode = str(q.get("kParamMode", "")).lower()
-        ph.set(k + "mode", "Free" if mode.startswith("free") else "Env" if mode.startswith("env") else "Retrig")
+        ph.set(k + "mode", "Free" if mode.startswith("free") else "Env" if mode.startswith("env") else "Retrig")   # [s]
         rate = num(q, "kParamRate", LFO_RATE_DEF)
         if num(q, "kParamBeatSync", 1) >= 0.5:
             beats = 32 * 2 ** (-8 * rate)                                                    # [g]

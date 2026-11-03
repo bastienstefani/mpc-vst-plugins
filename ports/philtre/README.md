@@ -103,7 +103,8 @@ file's name stands in. An upgrade of Philtre replaces the plugin folder except `
   Philtre has no counterpart for.
 - **Accuracy:** unison, detune, wavetable position, cutoff, resonance, envelope times and sustain convert with units
   measured on Serum 2.1.5 (published by the serum2-preset-loader project, MIT). Levels, pan, pitch ranges, curve shapes,
-  LFO rates, routing defaults and effect settings are read off preset files or guessed; the report marks them "~" and
+  LFO rates and effect settings are read off preset files or guessed (the defaults of the filter type, routing, LFO
+  rate and mode were checked on Serum 2's Init screen); the report marks them "~" and
   the converter marks them `[g]` next to their constant. `TESTING.md` says how to calibrate one.
 - The format comes from community reverse engineering (no Xfer Records code or documentation); the converter reads your
   files on your computer. Presets and wavetables belong to their makers: do not share converted factory content.

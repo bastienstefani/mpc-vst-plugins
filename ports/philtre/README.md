@@ -87,7 +87,9 @@ Then copy `out/Presets/*.xpl` into `<Synths folder>/bastienstefani - VST - Philt
 With `--tables`, also copy `out/wavetables/serum2/` into the plugin's `wavetables/` folder: each oscillator then plays
 Serum's own table (Philtre reads Serum's 2048-sample frames), and until the file is there a built-in table chosen from the
 file's name stands in. An upgrade of Philtre replaces the plugin folder except `wavetables/`: copy the presets again.
-`--synths` sets the Synths folder written in the files (default `/sdcard/Synths`).
+`--synths` sets the Synths folder written in the files (default `/sdcard/Synths`). On Windows (PowerShell or cmd), do not end a quoted path
+with a backslash (`'...\Tables'`, not `'...\Tables\'`): the backslash escapes the closing quote and the path swallows the
+next argument; the converter stops and says so.
 
 - **Converted:** the first two oscillators that are on (table, position, warp, unison up to 8, detune, phase, pitch, level,
   pan), noise (a noise type chosen from the sample's name), sub, the filter routing, filter 1 (or filter 2 when only it is

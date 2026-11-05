@@ -956,6 +956,10 @@ def presets_in(paths):
             yield p
 
 
+WIN_HINT = ("on Windows, a quoted path must not end with a backslash: '...\\Tables' not '...\\Tables\\' "
+            "(the backslash escapes the closing quote and joins the next argument)")
+
+
 def main(argv):
     args, opts = [], {"out": "philtre-import", "sources": {}, "synths": "/sdcard/Synths", "quiet": False,
                       "tables_copied": {}}
@@ -1001,7 +1005,13 @@ def main(argv):
                 print(k, "=", json.dumps(v) if isinstance(v, str) else v)
         return 0
     if opts.get("tables"):
+        if not os.path.isdir(opts["tables"]):
+            sys.exit("--tables: no such folder: %s\n%s" % (opts["tables"], WIN_HINT if '"' in opts["tables"] or
+                                                                    os.name == "nt" else ""))
         opts["tables_index"] = index_tables(opts["tables"])
+    for f in args:
+        if '"' in f:
+            sys.exit("not a path: %s\n%s" % (f, WIN_HINT))
     info = vst_info()
     skin = "%s - VST - %s" % (info["vendor"], info["name"])
     so_path = "%s/%s/%s" % (opts["synths"], skin, info["so"])

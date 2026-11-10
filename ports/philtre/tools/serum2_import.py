@@ -197,7 +197,12 @@ NOISE_LEVEL_DEF = 0.25             # [g]
 FREQ_LO, FREQ_HI = 8.1758, 22050.0   # [m] filter cutoff: stored 0..1 = FREQ_LO * (FREQ_HI / FREQ_LO)^n Hz, default 0.5
 CUTOFF_RANGE_SEMIS = 12 * math.log2(FREQ_HI / FREQ_LO)   # 137 semitones: a 100 % cutoff modulation in Serum
 CUTOFF_X_SEMIS = 12 * math.log2(1000)                    # Philtre's cutoff knob spans 120 semitones
-PITCH_RANGE_SEMIS = 24.0           # [g] a 100 % pitch modulation of an oscillator
+# a 100 % pitch modulation of an oscillator, in semitones, per Serum control: [f] CRS fitted on a kick rendered in Serum
+# 2.1.5 (bipolar 18.75 % from an LFO swept 24 semitones and landed on the played C); [g] the others
+PITCH_RANGES = {"kParamCoarsePit": 128.0, "kParamPitch": 24.0, "kParamOctave": 96.0, "kParamFine": 2.0}
+# LFO point curves [f]: curveVals 0.5 = straight, below 0.5 = fast then slow (a kick's pitch drop drawn at 0.125 decayed
+# with a time constant of 1/9 of the segment), so steepness k = SERUM_CURVE_K * (0.5 - c) * 2 on 1 - e^(-k u)
+SERUM_CURVE_K = 12.0
 # LFO rate [f] (Serum 2.0.16 presets saved by the user, 2026-11-03): stored in Hz when free (1.0 Hz -> 1.0068); when
 # synced the same knob value picks the division: 1/8 -> 10.66, 1 bar -> 1.627, so beats ~ LFO_SYNC_K / stored (a fit on
 # two points; the knob snaps, so each division covers a range). [s] the Init LFO is synced at 1/4: the default is put
@@ -453,13 +458,8 @@ class Converter:
         ph.set(o + "_rand", num(w, "kParamRandomPhase", 100.0))                               # [m] percent
         semis = num(q, "kParamOctave", 0) * 12 + num(q, "kParamPitch", 0) + num(q, "kParamCoarsePit", 0)
         cents = num(q, "kParamFine", 0)
-        total = semis + cents / 100
-        octv = max(-4, min(4, int(round(total / 12)))) if abs(total) > 12 else 0
-        rest = total - octv * 12
-        ph.set(o + "_oct", octv)
-        ph.set(o + "_semi", int(math.floor(rest + 0.5)))
-        ph.set(o + "_fine", (rest - math.floor(rest + 0.5)) * 100)
-        if "kParamPitch" in q or "kParamCoarsePit" in q:
+        self.set_pitch(o, semis + cents / 100)
+        if "kParamPitch" in q:
             ph.approx("oscillator %s: semitone units [g]" % L)
         ph.set(o + "_level", num(q, "kParamVolume", OSC_LEVEL_DEF) * 100)                   # [g] 0..1
         ph.set(o + "_pan", num(q, "kParamPan", 0))                                            # [f] -100..100
@@ -474,6 +474,14 @@ class Converter:
             elif k == "kParamDetuneWid":
                 ph.set(o + "_width", num(q, k, 100))
                 ph.approx("oscillator %s: unison width unit [g]" % L)
+
+    def set_pitch(self, o, total):
+        """An oscillator's transposition in semitones -> its octave, semitone and fine."""
+        octv = max(-4, min(4, int(round(total / 12)))) if abs(total) > 12 else 0
+        rest = total - octv * 12
+        self.ph.set(o + "_oct", octv)
+        self.ph.set(o + "_semi", int(math.floor(rest + 0.5)))
+        self.ph.set(o + "_fine", (rest - math.floor(rest + 0.5)) * 100)
 
     def table_file(self, path):
         """Copy the Serum table from --tables into OUT/wavetables/serum2/; -> its path under wavetables/, or None."""
@@ -610,8 +618,8 @@ class Converter:
         for i in range(n):
             x, y = float(xs[i]), float(ys[i])
             c = float(cs[i]) if i < len(cs) else 0.5
-            c = round(max(-1.0, min(1.0, (c - 0.5) * 2)), 3)
-            raw.append((min(max(x, 0), 1), 1 - 2 * min(max(y, 0), 1), c if abs(c) >= 0.002 else 0.0))   # [f] y down
+            k = SERUM_CURVE_K * max(-1.0, min(1.0, (0.5 - c) * 2))   # steepness of the segment to the next point
+            raw.append((min(max(x, 0), 1), 1 - 2 * min(max(y, 0), 1), k if abs(k) >= 0.02 else 0.0))   # [f] y down
         if len(raw) < 2:
             return [(0.0, -1.0, 0.0), (0.5, 1.0, 0.0)]
         if raw[-1][0] >= 1 and abs(raw[-1][1] - raw[0][1]) < 1e-4:
@@ -633,7 +641,18 @@ class Converter:
             del pts[min(range(1, len(pts)), key=err)]
         if len(pts) < 2:
             pts.append((0.5, pts[0][1], 0.0))
-        return pts
+        # Philtre's curves reach a steepness of 8: a steeper segment is cut in halves, each an exponential of half the
+        # steepness from the level the whole one has there, while there are points to spare
+        while len(pts) < mp.MAX_POINTS:
+            i = max(range(len(pts)), key=lambda j: abs(pts[j][2]))
+            t0, v0, k = pts[i]
+            t1, v1 = (pts[i + 1][0], pts[i + 1][1]) if i + 1 < len(pts) else (1.0, pts[0][1])
+            if abs(k) <= 8 or t1 - t0 < 0.01:              # (a step is not worth points)
+                break
+            f = (1 - math.exp(-k / 2)) / (1 - math.exp(-k))
+            pts[i] = (t0, v0, k / 2)
+            pts.insert(i + 1, (t0 + (t1 - t0) / 2, v0 + (v1 - v0) * f, k / 2))
+        return [(t, v, round(max(-1.0, min(1.0, k / 8)), 3)) for t, v, k in pts]
 
     def do_lfo(self, l, n):
         ph, node = self.ph, self.mod("LFO%d" % l)
@@ -650,8 +669,6 @@ class Converter:
             cd = node.get("curveData") if isinstance(node.get("curveData"), dict) else {}
             if len(cd.get("xVals") or []) > mp.MAX_POINTS + 1:
                 ph.approx("LFO %d: %d points -> %d" % (l + 1, len(cd["xVals"]), len(pts)))
-            if any(abs(c) > 0.01 for _, _, c in pts):
-                ph.approx("LFO %d: curve bend direction [g]" % (l + 1))
         mode = str(q.get("kParamMode", "")).lower()
         ph.set(k + "mode", "Free" if mode.startswith("free") else "Env" if mode.startswith("env") else "Retrig")   # [s]
         rate = num(q, "kParamRate", LFO_RATE_DEF)
@@ -725,9 +742,8 @@ class Converter:
                 return O + " Warp", 100, 100, osc + "_wamt"
         if typ == "Oscillator":
             if osc:
-                if pname in ("kParamPitch", "kParamCoarsePit", "kParamOctave", "kParamFine"):
-                    rng = {"kParamFine": 2, "kParamOctave": 96}.get(pname, PITCH_RANGE_SEMIS)
-                    return O + " Pitch", rng, 24, None
+                if pname in PITCH_RANGES:
+                    return O + " Pitch", PITCH_RANGES[pname], 24, osc + "_pitch"
                 if pname == "kParamVolume":
                     return O + " Level", 100, 100, osc + "_level"
                 if pname == "kParamPan":
@@ -787,7 +803,7 @@ class Converter:
             if used >= 16:
                 ph.drop(what + ": Philtre has 16 matrix slots")
                 continue
-            dname, rng, scale, base = dest
+            dname, rng, scale, base = dest[:4]
             bip = num(q, "kParamBipolar", 0) >= 0.5
             lfo = sname.startswith("LFO")
             # Serum: amt * R * (u - bip/2) with u the source 0..1. Philtre: amt' * S * p, an LFO p = 2u - 1, others p = u
@@ -795,22 +811,31 @@ class Converter:
                 a2, off = amt * rng / (2 * scale), amt / 100 * rng * (0.5 if not bip else 0.0)
             else:
                 a2, off = amt * rng / scale, -amt / 100 * rng * (0.5 if bip else 0.0)
-            if abs(a2) > 100:
-                ph.approx(what + ": amount %.0f %% -> 100 %% (Philtre's range)" % a2)
-                a2 = max(-100, min(100, a2))
+            n = max(1, math.ceil(abs(a2) / 100 - 1e-9))     # past Philtre's 100 %: the same route in more slots
+            if used + n > 16:
+                n = 16 - used
+                ph.approx(what + ": amount %.0f %% -> %d %% (no free slots for more)" % (a2, 100 * n))
+                a2 = max(-100 * n, min(100 * n, a2))
+            elif n > 1:
+                ph.approx(what + ": amount %.0f %% over %d matrix slots" % (a2, n))
             if off and base:   # in the destination's units; f_cut is in percent of 20 Hz..20 kHz (120 semitones)
                 self.offsets[base] = self.offsets.get(base, 0) + (off * 100 / CUTOFF_X_SEMIS if base == "f_cut" else off)
             elif off and abs(off) > 1e-6 and lfo:
                 ph.approx(what + ": a unipolar LFO plays bipolar (no base to shift)")
-            used += 1
-            ph.set("m%d_src" % used, sname)
-            ph.set("m%d_aux" % used, aname)
-            ph.set("m%d_dst" % used, dname)
-            ph.set("m%d_amt" % used, a2)
+            for _ in range(n):
+                used += 1
+                ph.set("m%d_src" % used, sname)
+                ph.set("m%d_aux" % used, aname)
+                ph.set("m%d_dst" % used, dname)
+                ph.set("m%d_amt" % used, a2 / n)
             if node.get("curveData") or any(k not in ("kParamAmount", "kParamBipolar") for k in q):
                 ph.approx(what + ": slot curve / output options left out")
         for key, off in self.offsets.items():
-            ph.set(key, ph.get(key) + off)
+            if key.endswith("_pitch"):                       # semitones onto the oscillator's octave / semi / fine
+                o = key[0]
+                self.set_pitch(o, ph.get(o + "_oct") * 12 + ph.get(o + "_semi") + ph.get(o + "_fine") / 100 + off)
+            else:
+                ph.set(key, ph.get(key) + off)
 
     # ---------------------------------------------------------------- macros
     def do_macros(self):
@@ -830,17 +855,28 @@ class Converter:
                 ph.drop("effect rack %d (Philtre has one rack)" % (r + 1))
         if not isinstance(rack, list):
             return
-        slot = 0
+        slot, in_band = 0, 0
         for fx in rack:
             if not isinstance(fx, dict):
                 continue
             kind = next((k for k in fx if k.startswith("FX") and isinstance(fx[k], dict)), None)
             if not kind:
                 continue
+            q = pp(fx[kind])
+            if in_band:                                     # inside one of the splitter's bands
+                in_band -= 1
+                if num(q, "kParamEnable", 1) >= 0.5:
+                    ph.drop("effect %s: in a band of the Splitter (Philtre has no band split)" % kind[2:])
+                continue
+            if "split" in kind.lower():                    # [f] kParamModuleCountN: how many next effects go to band N
+                in_band = sum(max(0, int(num(q, "kParamModuleCount%d" % b, 0))) for b in range(4))
+                ph.drop("effect Splitter (Philtre has no band split)")
+                continue
+            if num(q, "kParamEnable", 1) < 0.5:              # [f] switched off in Serum
+                continue
             if slot >= 8:
                 ph.drop("effect %s: Philtre has 8 slots" % kind[2:])
                 continue
-            q = pp(fx[kind])
             got = self.fx_one(kind, q)
             if not got:
                 ph.drop("effect %s" % kind[2:])
@@ -863,15 +899,18 @@ class Converter:
         if "hyper" in k or "dimension" in k or "ensemble" in k:
             return "Ensemble", g("kParamRate"), g("kParamDetune"), g("kParamDimESize"), wet
         if "dist" in k:
-            modes = [("tube", "Tube"), ("soft", "Soft"), ("hard", "Hard"), ("diode", "Diode"), ("sinfold", "Sine Fold"),
+            modes = [("tube", "Tube"), ("asym", "Tube"), ("soft", "Soft"), ("hard", "Hard"), ("diode", "Diode"),
+                     ("sinfold", "Sine Fold"),
                      ("sin", "Sine Fold"), ("fold", "Fold"), ("rect", "Rectify"), ("downs", "Downsample"),
                      ("bit", "Bitcrush"), ("quant", "Bitcrush")]
             m = next((n for key, n in modes if key in mode), "Tube")
             names = ["Tube", "Soft", "Hard", "Diode", "Fold", "Sine Fold", "Rectify", "Downsample", "Bitcrush"]
             return "Distortion", g("kParamDrive", 25), (names.index(m) + 0.5) / len(names) * 100, 100, wet
         if "comp" in k:
-            if any(x in q for x in ("kParamGain0", "kParamGain1", "kParamGain2", "kParamRatioBelow")):
-                return "Multiband", 60, 50, 50 if num(q, "kParamRatioBelow", 0) > 0 else 0, wet
+            if num(q, "kParamMultiband", 0) >= 0.5 or any(x in q for x in ("kParamGain0", "kParamGain1", "kParamGain2",
+                                                                          "kParamRatioBelow")):
+                # Philtre's Multiband has no make-up gain: half depth in parallel kept a kick within 2 dB of Serum's
+                return "Multiband", 30, 50, 50 if num(q, "kParamRatioBelow", 0) > 0 else 0, 50
             thr = num(q, "kParamThreshold", -18)
             ratio = num(q, "kParamRatio", 4)
             return ("Compressor", min(100, max(0, -thr / 40 * 100)),
@@ -889,7 +928,25 @@ class Converter:
         if "phas" in k:
             return "Phaser", None, g("kParamDepth"), g("kParamFeedback"), wet
         if k in ("fxeq", "fxequalizer") or "eq" == k[2:]:
-            return "EQ", None, None, None, None
+            # [f] bands kParamFreqN (Hz) / kParamGainN (dB); Philtre: a 200 Hz low shelf, a peak at 112 Hz-3.5 kHz and
+            # a 5 kHz high shelf, +-18 dB each: the biggest band in range takes the peak, the others a shelf
+            bands = [(num(q, "kParamFreq%d" % b, 200.0 if b == 1 else 5000.0), num(q, "kParamGain%d" % b, 0))
+                     for b in range(1, 5) if abs(num(q, "kParamGain%d" % b, 0)) > 0.05]
+            low = high = mid = None
+            for f, db in sorted(bands, key=lambda b: -abs(b[1])):
+                if f < 160 and low is None:
+                    low = db
+                elif f > 4000 and high is None:
+                    high = db
+                elif mid is None:
+                    mid = (min(max(f, 112.0), 3500.0), db)
+                elif f < 1000 and low is None:
+                    low = db
+                elif high is None:
+                    high = db
+            pct = lambda db: None if db is None else 50 + max(-18, min(18, db)) / 36 * 100  # noqa: E731
+            pk = None if mid is None else ((math.log(mid[0] / 20) / math.log(1000)) - 0.25) / 0.5 * 100
+            return "EQ", pct(low), pk, pct(mid[1]) if mid else None, pct(high)
         if "filter" in k:
             band = 50 if "band" in mode or "bp" in mode else 100 if "high" in mode or "hp" in mode else 0
             return ("Filter", cutoff_x(serum_hz(num(q, "kParamFreq", 0.5))), g("kParamReso"), band, wet)

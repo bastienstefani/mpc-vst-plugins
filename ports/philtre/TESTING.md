@@ -31,6 +31,13 @@
 | Host test x86, builds | as for 0.1.0 | PASSED; armv7 and aarch64 without warnings, glibc 2.29 / 2.34 |
 | Calibration (Serum 2.0.16) | presets saved from Init with one change: LFO 1 at 1/8, 1 bar, 1 Hz free; eight matrix slots (Macro 1, Macro 2, Velo, Note#, Aftertouch, Poly Aftertch, Pitch Bend, Mod Wheel); Init's LFO read in Hz mode (6.2 Hz) | the LFO rates and source numbers now in the converter; each of these converts to the same division / Hz / source (not kept in the repo) |
 
+Checked against Serum (2026-11-10, offline): a kick preset (Serum 2.1.5) and Serum's own render of it at 130 BPM. The
+first conversion was far off: effects switched off in Serum were converted as on (four distortions in series), the EQ
+was flat, the pitch envelope swept 4.5 semitones instead of 24 and bent the wrong way. After the fixes, Philtre's render
+(`test_states`-style harness, the same tempo and note) follows Serum's pitch drop (115 / 85 / 58 / 45 / 40 / 37 Hz at
+20 / 41 / 73 / 115 / 165 / 300 ms against 123 / 84 / 60 / 46 / 41 / 37 Hz), its level is 1.8 dB lower, and it has more
+energy between 120 Hz and 2 kHz (12 % against 4 %): the built-in table stood in for Serum's, and the effects differ.
+
 To calibrate a `[g]` unit: in Serum 2, save Init, then the same with one control moved to a known value (e.g. an LFO at
 1/8, or Osc A level at 50 %); `serum2_import.py --dump` both and compare the field, then fix the constant in the converter.
 

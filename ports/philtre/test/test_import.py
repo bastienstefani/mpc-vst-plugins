@@ -170,7 +170,13 @@ def main():
         {"type": 0, "FXDistortion": {"plainParams": {"kParamDrive": 60.0, "kParamMode": "kDiode2", "kParamWet": 80.0}}},
         {"type": 2, "FXDelay": {"plainParams": {"kParamFeedback": 45.0, "kParamWet": 25.0}}},
         {"type": 7, "FXBode": {"plainParams": {"kParamWet": 50.0}}},
-        {"type": 4, "FXReverb": {"plainParams": {"kParamSize": 70.0, "kParamWet": 30.0}}}]
+        {"type": 0, "FXDistortion": {"plainParams": {"kParamDrive": 90.0, "kParamEnable": 0.0}}},
+        {"type": 13, "FXSplit": {"plainParams": {"kParamFreq": 145.0, "kParamModuleCount2": 1.0}}},
+        {"type": 9, "FXHyperD": {"plainParams": {"kParamWet": 30.0}}},
+        {"type": 4, "FXReverb": {"plainParams": {"kParamSize": 70.0, "kParamWet": 30.0}}},
+        {"type": 7, "FXEQ": {"plainParams": {"kParamFreq1": 87.0, "kParamGain1": 11.4, "kParamFreq2": 1428.0,
+                                             "kParamGain2": 11.8, "kParamType1": 1.0, "kParamType2": 1.0}}},
+        {"type": 5, "FXComp": {"plainParams": {"kParamMultiband": 1.0, "kParamGain0": 8.8}}}]
     t2["FXRack1"]["FX"] = [{"type": 4, "FXReverb": {"plainParams": "default"}}]
     t3 = base_tree()
     for i in range(3):
@@ -192,7 +198,15 @@ def main():
     t3["LFO1"]["plainParams"] = {"kParamBeatSync": 0.0, "kParamRate": 1.0068}
     t3["LFO2"]["plainParams"] = {"kParamRate": 1.627}
 
-    files = {"init.SerumPreset": preset_bytes(t1, "Init Test"), "full.SerumPreset": preset_bytes(t2, "Full / Test"),
+    t4 = base_tree()
+    t4["Oscillator0"]["plainParams"] = {"kParamCoarsePit": 2.25}
+    t4["LFO0"] = {"curveData": {"xVals": [0.0, 0.0, 1.0], "yVals": [1.0, 0.011, 1.0], "curveVals": [0.5, 0.125, 0.5],
+                                "numPoints": 2}, "plainParams": {"kParamMode": "Envelope"}}
+    t4["ModSlot0"] = {"source": [6, 0], "destModuleTypeString": "Oscillator", "destModuleID": 0,
+                      "destModuleParamName": "kParamCoarsePit", "plainParams": {"kParamAmount": 18.75, "kParamBipolar": 1.0}}
+    t4["ModSlot1"] = {"source": [3, 0], "destModuleTypeString": "Oscillator", "destModuleID": 0,
+                      "destModuleParamName": "kParamCoarsePit", "plainParams": {"kParamAmount": 40.0}}
+    files = {"init.SerumPreset": preset_bytes(t1, "Init Test"), "kick.SerumPreset": preset_bytes(t4, "Kick Test"), "full.SerumPreset": preset_bytes(t2, "Full / Test"),
              "sub/three.SerumPreset": preset_bytes(t3, "Three Osc"),
              "bad-magic.SerumPreset": b"not a preset at all",
              "cut.SerumPreset": preset_bytes(t1)[:-20],
@@ -210,7 +224,8 @@ def main():
     check(r.returncode == 0, "the converter runs (%s)" % (r.stderr.strip()[-300:] or "exit 0"))
     report = open(os.path.join(out, "import-report.txt"), encoding="utf-8").read()
     names = sorted(os.listdir(os.path.join(out, "Presets")))
-    check(names == ["Full _ Test.xpl", "Init Test.xpl", "Three Osc.xpl"], "three presets, named after them: %s" % names)
+    check(names == ["Full _ Test.xpl", "Init Test.xpl", "Kick Test.xpl", "Three Osc.xpl"],
+          "four presets, named after them: %s" % names)
     for bad in ("bad-magic", "cut", "deep", "notmap", "huge-len"):
         check(re.search(r"%s\.SerumPreset\n  x not converted" % bad, report) is not None, "%s is refused in the report" % bad)
     check(os.path.exists(os.path.join(out, "wavetables", "serum2", "Default Shapes.wav")), "--tables copies a used table")
@@ -252,8 +267,9 @@ def main():
           "Serum LFO 3 -> Philtre LFO 1: points, Free, rate 10.66 -> 1/8 (%s)" % o("l1_sync"))
     pts = [tuple(float(x) for x in p.split(",")) for p in v2["l1_pts"].split("/")]
     check(len(pts) == 4 and pts[0][:2] == (0.0, 1.0) and abs(pts[1][0] - 0.25) < 1e-6 and pts[2][1] == -1.0
-          and 0.25 < pts[2][0] < 0.26 and abs(pts[1][2] - 0.8) < 1e-6 and pts[3][:2] == (0.998, -1.0),
-          "LFO points: y flipped, the step kept just after 0.25, the end step kept, curve 0.9 -> 0.8 (%s)" % v2["l1_pts"])
+          and 0.25 < pts[2][0] < 0.26 and pts[1][2] == -1.0 and pts[3][:2] == (0.998, -1.0),
+          "LFO points: y flipped, the step kept just after 0.25 (curve 0.9: slow then fast, at Philtre's limit), "
+          "the end step kept (%s)" % v2["l1_pts"])
     m = {i: (o("m%d_src" % i), o("m%d_dst" % i), float(v2["m%d_amt" % i])) for i in range(1, 17)}
     rng = si.CUTOFF_RANGE_SEMIS
     check(m[1][:2] == ("LFO 1", "Cutoff") and abs(m[1][2] - 50 * rng / 192) < 0.01, "slot 1: LFO -> cutoff, scaled to 96 semitones")
@@ -266,7 +282,13 @@ def main():
     check(m[5][0] == "Off", "no more slots")
     check("Serum source #22 not known" in report, "an unknown source is named in the report")
     fx = [(o("fx%d_type" % i), v2["fx%d_mix" % i]) for i in range(1, 9)]
-    check([f[0] for f in fx[:4]] == ["Distortion", "Delay", "Reverb", "Off"], "effects in order, Bode left out: %s" % fx[:4])
+    check([f[0] for f in fx[:6]] == ["Distortion", "Delay", "Reverb", "EQ", "Multiband", "Off"],
+          "effects in order; Bode, the one switched off, the splitter and the effect in its band left out: %s" % fx[:6])
+    check("effect Splitter" in report and "HyperD: in a band of the Splitter" in report, "the splitter and its band reported")
+    check(near(v2["fx4_p1"], 50 + 11.4 / 36 * 100, 0.1) and near(v2["fx4_p3"], 50 + 11.8 / 36 * 100, 0.1)
+          and near(v2["fx4_p2"], 73.6, 0.2) and near(v2["fx4_mix"], 50, 0.01),
+          "EQ: 87 Hz +11.4 dB on the low shelf, 1428 Hz +11.8 dB on the peak, high shelf flat")
+    check(near(v2["fx5_p1"], 30, 0.01) and near(v2["fx5_mix"], 50, 0.01), "multiband compressor: half depth, in parallel")
     check(int(float(v2["fx1_p2"]) / 100 * 9) == 3 and near(v2["fx1_p1"], 60) and near(v2["fx2_p2"], 45),
           "distortion mode Diode, drive; delay feedback")
     check("effect Bode" in report and "effect rack 2" in report, "the report names the Bode and the second rack")
@@ -290,6 +312,21 @@ def main():
     check("no such destination" in report, "an Env destination is reported")
     check("macro 3 (WIDE)" in report, "macro 3 reported")
 
+    s4 = state_of(os.path.join(out, "Presets", "Kick Test.xpl"))
+    v4 = values(s4)
+    o4 = lambda k: opts[k][int(v4[k])]  # noqa: E731
+    pts = [tuple(float(x) for x in p.split(",")) for p in v4["l1_pts"].split("/")]
+    check(o4("l1_mode") == "Env" and len(pts) == 3 and pts[1][:2] == (0.002, 0.978) and abs(pts[1][2] - 0.5625) < 1e-3
+          and abs(pts[2][0] - 0.501) < 1e-3 and abs(pts[2][1] + 0.978) < 2e-3 and abs(pts[2][2] - 0.5625) < 1e-3,
+          "kick LFO: the curve at 0.125 falls fast then slow, too steep for one Philtre segment, so cut in two (%s)"
+          % v4["l1_pts"])
+    check(o4("m1_src") == "LFO 1" and o4("m1_dst") == "A Pitch" and near(v4["m1_amt"], 50, 0.01),
+          "a bipolar 18.75 %% on CRS (128 semitones) sweeps 24 semitones: 50 %% of Philtre's +-24 (%s)" % v4["m1_amt"])
+    check([o4("m%d_src" % i) for i in (2, 3, 4, 5)] == ["Env 2", "Env 2", "Env 2", "Off"]
+          and all(near(v4["m%d_amt" % i], 40 * 128 / 24 / 3, 0.01) for i in (2, 3, 4)),
+          "an envelope at 40 %% of CRS (213 %% of Philtre's range) is spread over three slots")
+    check(v4["a_semi"] == "2" and near(v4["a_fine"], 25, 0.01), "CRS 2.25 -> +2 semitones 25 cents")
+
     # unknown --source name refused
     r = subprocess.run([sys.executable, os.path.join(HERE, "..", "tools", "serum2_import.py"), "-o", out, "--source",
                         "25=Banana", src], capture_output=True, text=True)
@@ -297,7 +334,7 @@ def main():
 
     if out_states:
         with open(out_states, "w") as f:
-            for st in (s1, s2, s3):
+            for st in (s1, s2, s3, s4):
                 f.write(st + "\n")
     print("%d failure(s)" % fails)
     return 1 if fails else 0

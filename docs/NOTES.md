@@ -2182,3 +2182,21 @@ Findings that apply to other ports:
   change (Serum 2.0.16): a free LFO rate is stored in Hz (1.0 Hz -> 1.0068); synced, the same field picks the division
   (1/8 -> 10.66, 1 bar -> 1.627, and Init's 1/4 shows 6.2 Hz in Hz mode; the knob snaps, so a division is a range),
   fitted as beats = 6 / stored; the converter takes `--source N=NAME` and reports what it could not place.
+
+## 2026-11-10: a Serum 2 preset checked against Serum's own render (Philtre import; offline only)
+
+A user's kick (Serum 2.1.5) and Serum's render of it, against the converted preset rendered by Philtre's engine at the
+same tempo and note. Facts about Serum 2's format and sound, read off that pair (one preset, so each is one data point):
+- An effect switched off in the rack keeps its settings and has `kParamEnable` 0 in its `plainParams`; the converter
+  used to play them all (four distortions in series).
+- `FXSplit` holds `kParamModuleCountN` (here `kParamModuleCount2` 1): the next N effects play in band N only. Philtre
+  has no band split, so the converter leaves the splitter and those effects out.
+- `FXEQ` bands are `kParamFreqN` (Hz), `kParamGainN` (dB), `kParamResoN`, `kParamTypeN`.
+- A bipolar 18.75 % from an LFO to `kParamCoarsePit` swept 24 semitones and the end pitch landed on the played C, so a
+  100 % coarse-pitch modulation is 128 semitones.
+- An LFO segment with `curveVals` 0.125 fell fast then slow, close to an exponential with a time constant of 1/9 of the
+  segment; 0.5 is straight. Philtre's point curves stop at a steepness of 8, so the converter cuts steeper segments in
+  two (exact for an exponential).
+- Philtre's Multiband has no make-up gain: at depth 60 the kick lost 15 dB that Serum's multiband compressor (with band
+  gains) keeps; the converter now plays it in parallel at half depth.
+

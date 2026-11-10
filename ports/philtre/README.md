@@ -97,15 +97,19 @@ next argument; the converter stops and says so.
   whose source and destination Philtre has (amounts rescaled to each destination's range; a unipolar LFO or a bipolar
   envelope moves the destination's base value by half its amount, as Serum does), the macros the matrix uses, mono /
   legato, and the main effect rack in order (Hyper/Dimension as Ensemble, Distortion, Compressor or Multiband, Delay,
-  Reverb or Plate, Chorus, Flanger, Phaser, EQ, Filter).
-- **Left out, listed in `out/import-report.txt` with "x":** a third oscillator, sample, granular and spectral oscillators
+  Reverb or Plate, Chorus, Flanger, Phaser, EQ, Filter). Effects switched off in Serum are skipped; EQ bands go to the
+  nearest of Philtre's low shelf, peak and high shelf; a multiband compressor plays in parallel at half depth (Philtre's
+  has no make-up gain); a modulation past Philtre's range is spread over several matrix slots.
+- **Left out, listed in `out/import-report.txt` with "x":** the Splitter and the effects in its bands, a third oscillator, sample, granular and spectral oscillators
   (a built-in table plays), a wavetable stored inside the preset, the second warp, filter 2 when both are on, LFOs past
   four and the chaos LFOs (a smooth random LFO plays), matrix sources the converter does not know (it knows the mod
   wheel, envelopes, LFOs, velocity, note, aftertouch, poly aftertouch, macros and pitch bend; the report gives the number
   of any other, and `--source 21=Random` names it), slot curves, the arpeggiator and clips, effect racks 2 and 3, and effects
   Philtre has no counterpart for.
 - **Accuracy:** unison, detune, wavetable position, cutoff, resonance, envelope times and sustain convert with units
-  measured on Serum 2.1.5 (published by the serum2-preset-loader project, MIT). A free LFO rate is in Hz and a synced
+  measured on Serum 2.1.5 (published by the serum2-preset-loader project, MIT). The coarse pitch's modulation range and
+  the shape of LFO curves were fitted on a kick rendered in Serum 2.1.5 (Philtre's pitch drop then matches within a few
+  milliseconds). A free LFO rate is in Hz and a synced
   one is fitted on two divisions, both from presets saved for the purpose. Levels, pan, pitch ranges, curve shapes and
   effect settings are read off preset files or guessed (the defaults of the filter type, routing, LFO rate and mode
   were checked on Serum 2's Init screen); the report marks them "~" and

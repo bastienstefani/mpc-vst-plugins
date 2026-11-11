@@ -4470,6 +4470,78 @@
    "display": "int",
    "dynamic_display": true,
    "live": true
+  },
+  {
+   "key": "fx1_on",
+   "name": "FX1 On",
+   "options": [
+    "Off",
+    "On"
+   ],
+   "default": 1
+  },
+  {
+   "key": "fx2_on",
+   "name": "FX2 On",
+   "options": [
+    "Off",
+    "On"
+   ],
+   "default": 1
+  },
+  {
+   "key": "fx3_on",
+   "name": "FX3 On",
+   "options": [
+    "Off",
+    "On"
+   ],
+   "default": 1
+  },
+  {
+   "key": "fx4_on",
+   "name": "FX4 On",
+   "options": [
+    "Off",
+    "On"
+   ],
+   "default": 1
+  },
+  {
+   "key": "fx5_on",
+   "name": "FX5 On",
+   "options": [
+    "Off",
+    "On"
+   ],
+   "default": 1
+  },
+  {
+   "key": "fx6_on",
+   "name": "FX6 On",
+   "options": [
+    "Off",
+    "On"
+   ],
+   "default": 1
+  },
+  {
+   "key": "fx7_on",
+   "name": "FX7 On",
+   "options": [
+    "Off",
+    "On"
+   ],
+   "default": 1
+  },
+  {
+   "key": "fx8_on",
+   "name": "FX8 On",
+   "options": [
+    "Off",
+    "On"
+   ],
+   "default": 1
   }
  ],
  "sections": [
@@ -4750,7 +4822,15 @@
     "fx8_p1",
     "fx8_p2",
     "fx8_p3",
-    "fx8_mix"
+    "fx8_mix",
+    "fx1_on",
+    "fx2_on",
+    "fx3_on",
+    "fx4_on",
+    "fx5_on",
+    "fx6_on",
+    "fx7_on",
+    "fx8_on"
    ]
   }
  ]

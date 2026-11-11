@@ -231,7 +231,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -465,7 +473,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -699,7 +715,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -933,7 +957,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -1167,7 +1199,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -1401,7 +1441,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -1635,7 +1683,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -1869,7 +1925,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -2103,7 +2167,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -2337,7 +2409,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -2571,7 +2651,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -2805,7 +2893,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -3039,7 +3135,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -3273,7 +3377,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -3507,7 +3619,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   },
   {
@@ -3741,7 +3861,15 @@
     "e4_rc": 50,
     "ev_sel": "Env 1",
     "lv_sel": "LFO 1",
-    "lv_pt": 1
+    "lv_pt": 1,
+    "fx1_on": "On",
+    "fx2_on": "On",
+    "fx3_on": "On",
+    "fx4_on": "On",
+    "fx5_on": "On",
+    "fx6_on": "On",
+    "fx7_on": "On",
+    "fx8_on": "On"
    }
   }
  ]

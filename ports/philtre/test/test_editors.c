@@ -131,6 +131,48 @@ int main(void) {
     float hold = level(c, 30, 34);
     CHECK(hold > 0.1f && nohold < 0.01f, "hold keeps the level up after a short decay would have ended it (%.3f vs %.3f)", hold, nohold);
     E->destroy(c);
+
+    /* ---- an effect slot switched off and on (0.4.0) ---- */
+    void *d = E->create(NULL);
+    set(d, "f_on", 0); set(d, "a_uni", 1); set(d, "vel", 0); set(d, "a_rand", 0);   /* the same start phase every note */
+    float dry = level(d, 4, 8);
+    set(d, "fx1_type", FX_DISTORTION); set(d, "fx1_p1", 100); set(d, "fx1_mix", 100);
+    float wet = level(d, 4, 8);
+    set(d, "fx1_on", 0);
+    float off = level(d, 4, 8);
+    CHECK(fabsf(off - dry) < 0.03f * dry && fabsf(wet - dry) > 0.2f * dry,   /* (notes differ a little: the DC filter) */
+          "a slot switched off sounds as if it were empty (%.4f, %.4f; with it on %.4f)", off, dry, wet);
+    CHECK(get(d, "fx1_type") == FX_DISTORTION && get(d, "fx1_p1") == 100, "and keeps its effect and settings");
+    char st2[8192] = "";
+    E->get_param(d, "state", st2, sizeof st2);
+    void *d2 = E->create(NULL);
+    E->set_param(d2, "state", st2);
+    CHECK(get(d2, "fx1_on") == 0 && strstr(st2, ";fx1_on=0"), "a saved state keeps the slot off");
+    E->destroy(d2);
+    E->set_param(d, "state", "ph1;fx1_type=6");   /* a 0.3.0 state: no switch saved, so the slot is on */
+    CHECK(get(d, "fx1_on") == 1, "a state from before 0.4.0 has its slots on");
+    /* a delay switched off while echoing, then on: no echo from before comes back, and no click either way */
+    set(d, "a_pos", 0);   /* a sine: its echoes have no edges of their own, so a click would stand out */
+    set(d, "fx1_type", FX_DELAY); set(d, "fx1_p1", 0); set(d, "fx1_p2", 90); set(d, "fx1_mix", 100); set(d, "fx1_on", 1);
+    uint8_t on[3] = {0x90, 60, 127}, nf[3] = {0x80, 60, 0};
+    int16_t out[256];
+    E->midi(d, on, 3); run(d, 20); E->midi(d, nf, 3); run(d, 40);   /* 1/32 echoes of a released note */
+    float natural = 0, jump = 0, echo = 0, prev = 0;
+    E->render(d, out, 128);
+    prev = out[0] / 32768.0f;
+    for (int i = 2; i < 256; i += 2) { float v = out[i] / 32768.0f; natural = fmaxf(natural, fabsf(v - prev)); echo = fmaxf(echo, fabsf(v)); prev = v; }
+    set(d, "fx1_on", 0);
+    E->render(d, out, 128);
+    for (int i = 0; i < 256; i += 2) { float v = out[i] / 32768.0f; jump = fmaxf(jump, fabsf(v - prev)); prev = v; }
+    run(d, 400);
+    set(d, "fx1_on", 1);
+    float tail = 0;
+    for (int b = 0; b < 200; b++) { E->render(d, out, 128); for (int i = 0; i < 256; i++) tail = fmaxf(tail, fabsf(out[i] / 32768.0f)); }
+    CHECK(tail < 1e-3f, "switched back on, the delay starts empty (peak %.5f)", tail);
+    CHECK(echo > 0.01f && jump <= natural * 1.5f + 1e-3f,
+          "switching off mid-echo fades over a block: no step bigger than the echo's own (%.4f vs %.4f, echo %.3f)",
+          jump, natural, echo);
+    E->destroy(d);
     E->destroy(s);
     printf("%s\n", fails ? "FAILED" : "PASSED");
     return fails != 0;

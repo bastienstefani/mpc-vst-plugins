@@ -263,11 +263,12 @@ for page in range(2):
     for c in range(4):
         s = page * 4 + c + 1
         frame(c, "SLOT %d" % s, title)
-        out.append('popup cx=%d cy=172 w=216 h=40 label="EFFECT" key=fx%d_type%s' % (CX[c], s, bk(title)))
+        out.append('popup cx=%d cy=172 w=152 h=40 label="EFFECT" key=fx%d_type%s' % (X[c] + 90, s, bk(title)))
+        out.append('toggle cx=%d cy=172 ns=0 label="ON" key=fx%d_on%s' % (X[c] + 202, s, bk(title)))   # on / off
         for i, k in enumerate(("p1", "p2", "p3", "mix")):
             out.append('knob cx=%d cy=%d r=24 label="%s" key=fx%d_%s%s' % (CX[c], 232 + 117 * i, k.upper(), s, k, bk(title)))
 help_text(["Slots run in order,", "1 to 8", "", "Each knob is named", "after its slot's", "effect", "",
-           "Press FX again", "for slots 5-8"])
+           "The switch by the", "effect turns the", "slot off and on", "", "Press FX again", "for slots 5-8"])
 for page in range(2):
     qlinks("FX %d-%d" % (page * 4 + 1, page * 4 + 4),
            ["fx%d_%s" % (page * 4 + c + 1, k) for c in range(4) for k in ("p1", "p2", "p3", "mix")])

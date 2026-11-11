@@ -143,6 +143,8 @@ typedef struct {
     float fxmod[FX_SLOTS][2];
     float gain_cur, dc_x[2], dc_y[2];
     float mixL[128], mixR[128];
+    float fxg[FX_SLOTS];          /* each slot's on/off gain, ramped over a block so a switch does not click */
+    float dryL[128], dryR[128];   /* the rack's input to a slot while that ramp runs */
     /* LFO points (shape Custom), the curve editors and their displays */
     pts_t pts[4];
     unsigned char chg[NP];        /* params the engine changed by itself, to report (mpc_engine_changed) */
@@ -1130,7 +1132,10 @@ static void defaults(ph_t *s) {
     for (int p = 0; p < NP; p++) s->v[p] = PH_P[p].def;
     for (int l = 0; l < 4; l++) pts_default(&s->pts[l]);
     s->disp_dirty = 3;
-    for (int k = 0; k < FX_SLOTS; k++) if (s->fx[k].type != FX_OFF) fx_prepare(&s->fx[k], FX_OFF);
+    for (int k = 0; k < FX_SLOTS; k++) {
+        if (s->fx[k].type != FX_OFF) fx_prepare(&s->fx[k], FX_OFF);
+        s->fxg[k] = 1;
+    }
     s->dirty = 1;
 }
 
@@ -1211,6 +1216,10 @@ static void set_value(ph_t *s, int p, float x) {
         if (x > last) x = last < WT_NB ? WT_NB - 1 : last;
     }
     if (p == P_MODE && x != s->v[p]) all_off(s, 0);
+    if (p >= P_FX1_ON && p <= P_FX8_ON && x >= 0.5f && s->v[p] < 0.5f) {   /* back on: from a clean state, not the old tail */
+        int k = p - P_FX1_ON;
+        if (s->fx[k].type != FX_OFF) fx_prepare(&s->fx[k], s->fx[k].type);
+    }
     s->v[p] = x;
     if (p == P_A_TABLE || p == P_B_TABLE) request_table(s, p == P_B_TABLE);
     if (p >= P_FX1_TYPE && p <= P_FX8_MIX && (p - P_FX1_TYPE) % 5 == 0) {
@@ -1282,6 +1291,7 @@ static void state_set(ph_t *s, const char *str) {
             float named = w ? strtof(w + 9, NULL) : 0;
             set_value(s, t, f >= 0 ? (float)(WT_NB + f) : named >= 0 && named < WT_NB ? floorf(named) : 0);
         }
+    for (int k = 0; k < FX_SLOTS; k++) s->fxg[k] = s->v[P_FX1_ON + k] >= 0.5f;   /* a loaded slot starts as it is */
 }
 
 static void set_param(void *p, const char *key, const char *val) {
@@ -1413,11 +1423,22 @@ static void render(void *p, int16_t *out, int frames) {
     matrix(s, src, dm, DST_FX1_P1, N_DST);
     for (int k = 0; k < FX_SLOTS; k++) {
         fxslot_t *fx = &s->fx[k];
-        if ((int)s->v[P_FX1_TYPE + 5 * k] == FX_OFF || fx->type == FX_OFF) continue;
+        float g0 = s->fxg[k], g1 = s->v[P_FX1_ON + k] >= 0.5f ? 1.0f : 0.0f;
+        s->fxg[k] = g1;
+        if ((int)s->v[P_FX1_TYPE + 5 * k] == FX_OFF || fx->type == FX_OFF || (g0 <= 0 && g1 <= 0)) continue;
         int b = P_FX1_P1 + 5 * k;
         float pp[4] = {s->v[b] / 100 + dm[DST_FX1_P1 + k], s->v[b + 1] / 100, s->v[b + 2] / 100,
                        s->v[b + 3] / 100 + dm[DST_FX1_MIX + k]};
+        if (g0 >= 1 && g1 >= 1) { fx_process(fx, pp, s->bpm, s->mixL, s->mixR, frames); continue; }
+        memcpy(s->dryL, s->mixL, sizeof(float) * frames);   /* switched on or off in this block: fade between */
+        memcpy(s->dryR, s->mixR, sizeof(float) * frames);
         fx_process(fx, pp, s->bpm, s->mixL, s->mixR, frames);
+        float dg = (g1 - g0) / frames;
+        for (int i = 0; i < frames; i++) {
+            float g = g0 + dg * (i + 1);
+            s->mixL[i] = s->dryL[i] + (s->mixL[i] - s->dryL[i]) * g;
+            s->mixR[i] = s->dryR[i] + (s->mixR[i] - s->dryR[i]) * g;
+        }
     }
     float g0 = s->gain_cur < 0 ? s->vol_g : s->gain_cur, dg = (s->vol_g - g0) / frames;
     for (int i = 0; i < frames; i++) {

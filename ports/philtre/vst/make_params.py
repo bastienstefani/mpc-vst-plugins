@@ -177,6 +177,10 @@ for kind, nm in (("envd", "Env View"), ("lfod", "LFO View")):   # display column
     for i in range(1, DISP_COLS + 1):
         num("%s_%d" % (kind, i), "%s %d" % (nm, i), 0, DISP_LEVELS - 1, 0, "INT", True, live=True, virtual=True, display=True)
 
+# --- 0.4.0: each effect slot can be switched off; it keeps its settings and costs nothing while off ---
+for s in range(1, 9):
+    opt("fx%d_on" % s, "FX%d On" % s, ONOFF, 1)
+
 
 def params_json():
     out = []

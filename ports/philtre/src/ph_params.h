@@ -332,6 +332,14 @@ enum {
     P_LFOD_38,
     P_LFOD_39,
     P_LFOD_40,
+    P_FX1_ON,
+    P_FX2_ON,
+    P_FX3_ON,
+    P_FX4_ON,
+    P_FX5_ON,
+    P_FX6_ON,
+    P_FX7_ON,
+    P_FX8_ON,
     NP
 };
 
@@ -667,6 +675,14 @@ static const ph_pdef_t PH_P[NP] = {
     {"lfod_38", 0, 24, 0, F_INT, 0, 1, 3},
     {"lfod_39", 0, 24, 0, F_INT, 0, 1, 3},
     {"lfod_40", 0, 24, 0, F_INT, 0, 1, 3},
+    {"fx1_on", 0, 1, 1, F_NONE, 2, 1, 0},
+    {"fx2_on", 0, 1, 1, F_NONE, 2, 1, 0},
+    {"fx3_on", 0, 1, 1, F_NONE, 2, 1, 0},
+    {"fx4_on", 0, 1, 1, F_NONE, 2, 1, 0},
+    {"fx5_on", 0, 1, 1, F_NONE, 2, 1, 0},
+    {"fx6_on", 0, 1, 1, F_NONE, 2, 1, 0},
+    {"fx7_on", 0, 1, 1, F_NONE, 2, 1, 0},
+    {"fx8_on", 0, 1, 1, F_NONE, 2, 1, 0},
 };
 
 #define WT_NB 12          /* built-in wavetables; a table index from WT_NB on is a user file */

@@ -5,8 +5,8 @@ II's screen, its four Q-Link knobs and its data wheel. Original code (GPL-3.0-or
 Xfer Records: no Serum code, presets, wavetables or artwork. The built-in wavetables are computed when the plugin loads,
 the presets are original, and you can load your own `.wav` wavetables.
 
-Status: **0.3.0, offline only** (2026-11-03; the Serum 2 preset import is new in 0.3.0, the envelope curves and shape
-editors in 0.2.0). It builds for Gen1 (armv7) and Gen2 (aarch64) and passes the host tests and a sanitizer stress run;
+Status: **0.4.0, offline only** (2026-11-11; effect slots that switch on and off are new in 0.4.0, the Serum 2 preset
+import in 0.3.0, the envelope curves and shape editors in 0.2.0). It builds for Gen1 (armv7) and Gen2 (aarch64) and passes the host tests and a sanitizer stress run;
 nothing has run on a device yet. See `TESTING.md`.
 
 ## Sound engine
@@ -51,7 +51,9 @@ knobs are **named after the effect** (MPC reads the names from the plugin):
 | EQ | Low shelf | Mid frequency | Mid gain | High shelf |
 | Filter | Cutoff | Resonance | LP > BP > HP | Mix |
 
-The order is the slot order: to move an effect, pick it in another slot. A slot set to Off costs nothing.
+The order is the slot order: to move an effect, pick it in another slot. The switch next to each slot's `EFFECT` list
+turns the slot off and on: off, it keeps its effect and settings and costs nothing, as a slot set to Off; switching
+fades over one block (3 ms), and a slot switched back on starts empty (no old delay or reverb tail).
 
 ## Your own wavetables
 Put `.wav` files in the plugin's `wavetables/` folder (`<Synths folder>/bastienstefani - VST - Philtre/wavetables/`, up to
@@ -97,15 +99,16 @@ next argument; the converter stops and says so.
   whose source and destination Philtre has (amounts rescaled to each destination's range; a unipolar LFO or a bipolar
   envelope moves the destination's base value by half its amount, as Serum does), the macros the matrix uses, mono /
   legato, and the main effect rack in order (Hyper/Dimension as Ensemble, Distortion, Compressor or Multiband, Delay,
-  Reverb or Plate, Chorus, Flanger, Phaser, EQ, Filter). Effects switched off in Serum are skipped; EQ bands go to the
-  nearest of Philtre's low shelf, peak and high shelf; a multiband compressor plays in parallel at half depth (Philtre's
-  has no make-up gain); a modulation past Philtre's range is spread over several matrix slots.
-- **Left out, listed in `out/import-report.txt` with "x":** the Splitter and the effects in its bands, a third oscillator, sample, granular and spectral oscillators
-  (a built-in table plays), a wavetable stored inside the preset, the second warp, filter 2 when both are on, LFOs past
-  four and the chaos LFOs (a smooth random LFO plays), matrix sources the converter does not know (it knows the mod
-  wheel, envelopes, LFOs, velocity, note, aftertouch, poly aftertouch, macros and pitch bend; the report gives the number
-  of any other, and `--source 21=Random` names it), slot curves, the arpeggiator and clips, effect racks 2 and 3, and effects
-  Philtre has no counterpart for.
+  Reverb or Plate, Chorus, Flanger, Phaser, EQ, Filter). Effects switched off in Serum come as slots switched off (with
+  more than 8 effects, those that are on keep their slots first); EQ bands go to the nearest of Philtre's low shelf,
+  peak and high shelf; a multiband compressor plays in parallel at half depth (Philtre's has no make-up gain); a
+  modulation past Philtre's range is spread over several matrix slots.
+- **Left out, listed in `out/import-report.txt` with "x":** the Splitter and the effects in its bands, a third
+  oscillator, sample, granular and spectral oscillators (a built-in table plays), a wavetable stored inside the preset,
+  the second warp, filter 2 when both are on, LFOs past four and the chaos LFOs (a smooth random LFO plays), matrix
+  sources the converter does not know (it knows the mod wheel, envelopes, LFOs, velocity, note, aftertouch, poly
+  aftertouch, macros and pitch bend; the report gives the number of any other, and `--source 21=Random` names it), slot
+  curves, the arpeggiator and clips, effect racks 2 and 3, and effects Philtre has no counterpart for.
 - **Accuracy:** unison, detune, wavetable position, cutoff, resonance, envelope times and sustain convert with units
   measured on Serum 2.1.5 (published by the serum2-preset-loader project, MIT). The coarse pitch's modulation range and
   the shape of LFO curves were fitted on a kick rendered in Serum 2.1.5 (Philtre's pitch drop then matches within a few
@@ -133,7 +136,7 @@ then turn the data wheel: one step per click on lists and whole numbers. Lists o
 | LFO | LFO n: shape, rate, sync, mode (2nd press: rise, phase) | | | |
 | LFO SHAPE (LFO, 3rd press) | Point, time, level, curve | Shape | Edit (LFO 1-4) | |
 | MOD | Slot n: source, aux, destination, amount (four sub-pages, slots 1-16) | | | |
-| FX | Slot n: effect (tap), then P1, P2, P3, mix on the Q-Links (two sub-pages, slots 1-8) | | | |
+| FX | Slot n: effect (tap) and its on / off switch, then P1, P2, P3, mix on the Q-Links (two sub-pages, slots 1-8) | | | |
 
 ## Presets
 Sixteen original presets in MPC's PRESET menu (`vst/presets.json`, written by `vst/make_presets.py`): Init, Seven Saw Lead,
@@ -174,6 +177,9 @@ displays (redrawing costs MPC's screen thread a lot), dragging effects to reorde
 in the matrix, sample-based noise, MPE, and a 2.x skin (the skin is MPC OS 3.x only).
 
 ## Changes
+- 0.4.0 (2026-11-11): an on / off switch per effect slot (`fx1_on` ... `fx8_on`, appended: projects and presets from
+  before have their slots on). The Serum 2 import keeps effects switched off in Serum as slots switched off (the
+  effects that are on keep their slots first).
 - 0.3.0 (2026-11-03): Serum 2 preset import (`tools/serum2_import.py`). A project or preset naming a user wavetable file
   that is missing now keeps the built-in table it names (a converted preset's stand-in) instead of the first one.
 - 0.2.0 (2026-11-03): envelope hold and curves; Custom LFO shapes made of points; the ENV SHAPE and LFO SHAPE editors with

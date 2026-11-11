@@ -2188,7 +2188,8 @@ Findings that apply to other ports:
 A user's kick (Serum 2.1.5) and Serum's render of it, against the converted preset rendered by Philtre's engine at the
 same tempo and note. Facts about Serum 2's format and sound, read off that pair (one preset, so each is one data point):
 - An effect switched off in the rack keeps its settings and has `kParamEnable` 0 in its `plainParams`; the converter
-  used to play them all (four distortions in series).
+  used to play them all (four distortions in series). Philtre 0.4.0 has an on / off switch per slot, so they now come
+  as slots switched off.
 - `FXSplit` holds `kParamModuleCountN` (here `kParamModuleCount2` 1): the next N effects play in band N only. Philtre
   has no band split, so the converter leaves the splitter and those effects out.
 - `FXEQ` bands are `kParamFreqN` (Hz), `kParamGainN` (dB), `kParamResoN`, `kParamTypeN`.

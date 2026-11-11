@@ -41,6 +41,15 @@ energy between 120 Hz and 2 kHz (12 % against 4 %): the built-in table stood in 
 To calibrate a `[g]` unit: in Serum 2, save Init, then the same with one control moved to a known value (e.g. an LFO at
 1/8, or Osc A level at 50 %); `serum2_import.py --dump` both and compare the field, then fix the constant in the converter.
 
+## Offline, 0.4.0 (2026-11-11): effect slots switched on and off
+| Check | How | Result |
+|---|---|---|
+| Engine | `test/test_editors.c` (run by `test/run.sh`, ASan/UBSan) | PASSED: a slot switched off sounds as if it were empty and keeps its effect and settings; a saved state keeps it off; a state from before 0.4.0 has its slots on; a delay switched back on starts empty; switching off mid-echo (a sine's echoes, 0.22 peak) makes no step bigger than the echo's own (eight runs) |
+| Serum import | `test/test_import.py` | PASSED: an effect switched off in Serum comes as a slot switched off with its settings; ten effects with three off: the seven on keep their slots, the first off one fills the eighth |
+| The user's kick | converted again and rendered | EQ, Distortion, three slots switched off, Distortion, Multiband; the render is bit-identical to the same state with those three slots empty |
+| Skin | `skin_check`, `tools/studio.py preview` of FX 1-4 and 5-8 | the switch sits right of a narrower `EFFECT` list (152 px); no overlap but the open lists' (as before) |
+| Host test x86 and aarch64, builds | as for 0.1.0 | PASSED; armv7 and aarch64 without warnings, glibc 2.29 / 2.34 |
+
 ## On the device (MPC Live II, to do)
 Install: unzip `Philtre-<version>-mpc-armv7.zip` on the MPC and run `./install.sh` as root (it stops MPC, backs up
 `MPC.settings`, registers the plugin and starts MPC), or drop the zip into the MPC plugin installer app.
@@ -69,5 +78,6 @@ Install: unzip `Philtre-<version>-mpc-armv7.zip` on the MPC and run `./install.s
 | 20 | Imported preset | convert a Serum 2 preset, copy the `.xpl` to the plugin's `Presets/`, restart MPC, open it from the tile's preset page | it loads with its sound (says whether MPC needs the file's plugin path or matches the uid) |
 | 21 | Imported table | convert with `--tables`, copy `wavetables/serum2/` | OSC A shows the table's name and plays it after a moment |
 | 22 | Compared to Serum | play the same preset in Serum 2 and on the MPC | note what differs most (LFO rates, levels, filter type): the `[g]` units to calibrate first |
+| 23 | FX switch | FX tab: put Distortion in slot 1, play, tap its switch off and on | the sound loses and gets back the distortion, without a click; the switch shows the state after a project reload |
 
 Record the results here and in `tested.json` (device, MPC OS version, date).

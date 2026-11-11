@@ -5,8 +5,8 @@ II's screen, its four Q-Link knobs and its data wheel. Original code (GPL-3.0-or
 Xfer Records: no Serum code, presets, wavetables or artwork. The built-in wavetables are computed when the plugin loads,
 the presets are original, and you can load your own `.wav` wavetables.
 
-Status: **0.4.0, offline only** (2026-11-11; effect slots that switch on and off are new in 0.4.0, the Serum 2 preset
-import in 0.3.0, the envelope curves and shape editors in 0.2.0). It builds for Gen1 (armv7) and Gen2 (aarch64) and passes the host tests and a sanitizer stress run;
+Status: **0.5.0, offline only** (2026-11-11; 16 effect slots and the Splitter are new in 0.5.0, the on / off switch per
+slot in 0.4.0, the Serum 2 preset import in 0.3.0, the envelope curves and shape editors in 0.2.0). It builds for Gen1 (armv7) and Gen2 (aarch64) and passes the host tests and a sanitizer stress run;
 nothing has run on a device yet. See `TESTING.md`.
 
 ## Sound engine
@@ -30,12 +30,12 @@ Per voice (8 voices, poly, mono or legato, glide, bend range, velocity):
 - **Modulation matrix:** 16 slots of `Source x Aux x Amount -> Destination`. Sources: Env 1-4, LFO 1-4 (-1..1), Velocity,
   Note, Mod Whl, Aftertouch (channel or poly), Bend, Macro 1-4, Random (per note), Expr (CC 11). Destinations: pitch, amp,
   pan; per oscillator pitch, WT position, warp, level, pan, detune, blend; sub level and pan; noise level and pitch; cutoff,
-  resonance, drive, filter mix; LFO rates; and P1 and Mix of each of the 8 FX slots (effects follow the last voice played).
+  resonance, drive, filter mix; LFO rates; and P1 and Mix of each of the 16 FX slots (effects follow the last voice played).
 - MIDI: notes, velocity, bend, CC 1, CC 11, sustain, aftertouch, CC 120/121/123. CC 20-35 move the MAIN page's Q-Links (the
   macros first), and NRPN reaches every parameter.
 
 ## Effect rack
-Eight slots in series. Each slot picks an effect (`EFFECT` list) and has three controls and a mix; on the MPC the four
+Sixteen slots in series. Each slot picks an effect (`EFFECT` list) and has three controls and a mix; on the MPC the four
 knobs are **named after the effect** (MPC reads the names from the plugin):
 
 | Effect | P1 | P2 | P3 | P4 |
@@ -50,10 +50,19 @@ knobs are **named after the effect** (MPC reads the names from the plugin):
 | Reverb (hall), Plate | Size | Damping | Pre-delay | Mix |
 | EQ | Low shelf | Mid frequency | Mid gain | High shelf |
 | Filter | Cutoff | Resonance | LP > BP > HP | Mix |
+| Splitter (see below) | Low / mid crossover | Mid / high crossover | Mode (3 bands, Low / High, Left / Right, Mid / Side) | Mix |
 
 The order is the slot order: to move an effect, pick it in another slot. The switch next to each slot's `EFFECT` list
 turns the slot off and on: off, it keeps its effect and settings and costs nothing, as a slot set to Off; switching
 fades over one block (3 ms), and a slot switched back on starts empty (no old delay or reverb tail).
+
+**Splitter.** A slot set to Splitter cuts the sound into bands: low / mid / high (two crossovers), low / high (the first
+crossover), left / right, or mid / side. Each slot after it has a `BAND` selector (All, Band 1, 2, 3): set to a band, it
+plays on that band only. The bands add back together at the first slot set to All after them (or the next Splitter, or
+the end of the rack), mixed with what went into the Splitter by its MIX (100 when you pick it). The bands sum back
+exactly (12 dB/octave crossovers taken off by subtraction), so a Splitter with nothing on its bands changes nothing.
+A Splitter switched off leaves the slots set to a band playing on the whole sound. A band selector with no Splitter
+before it does nothing.
 
 ## Your own wavetables
 Put `.wav` files in the plugin's `wavetables/` folder (`<Synths folder>/bastienstefani - VST - Philtre/wavetables/`, up to
@@ -100,16 +109,17 @@ next argument; the converter stops and says so.
   whose source and destination Philtre has (amounts rescaled to each destination's range; a unipolar LFO or a bipolar
   envelope moves the destination's base value by half its amount, as Serum does), the macros the matrix uses, mono /
   legato, and the main effect rack in order (Hyper/Dimension as Ensemble, Distortion, Compressor or Multiband, Delay,
-  Reverb or Plate, Chorus, Flanger, Phaser, EQ, Filter). Effects switched off in Serum come as slots switched off (with
-  more than 8 effects, those that are on keep their slots first); EQ bands go to the nearest of Philtre's low shelf,
+  Reverb or Plate, Chorus, Flanger, Phaser, EQ, Filter, and the Splitter with the effects in its bands set to those
+  bands). Effects switched off in Serum come as slots switched off (with more than 16 effects, those that are on keep
+  their slots first); EQ bands go to the nearest of Philtre's low shelf,
   peak and high shelf; a multiband compressor plays in parallel at half depth (Philtre's has no make-up gain); a
   modulation past Philtre's range is spread over several matrix slots.
-- **Left out, listed in `out/import-report.txt` with "x":** the Splitter and the effects in its bands, a third
-  oscillator, sample, granular and spectral oscillators (a built-in table plays), a wavetable stored inside the preset,
-  the second warp, filter 2 when both are on, LFOs past four and the chaos LFOs (a smooth random LFO plays), matrix
-  sources the converter does not know (it knows the mod wheel, envelopes, LFOs, velocity, note, aftertouch, poly
-  aftertouch, macros and pitch bend; the report gives the number of any other, and `--source 21=Random` names it), slot
-  curves, the arpeggiator and clips, effect racks 2 and 3, and effects Philtre has no counterpart for.
+- **Left out, listed in `out/import-report.txt` with "x":** a third oscillator, sample, granular and spectral
+  oscillators (a built-in table plays), a wavetable stored inside the preset, the second warp, filter 2 when both are
+  on, LFOs past four and the chaos LFOs (a smooth random LFO plays), matrix sources the converter does not know (it
+  knows the mod wheel, envelopes, LFOs, velocity, note, aftertouch, poly aftertouch, macros and pitch bend; the report
+  gives the number of any other, and `--source 21=Random` names it), slot curves, the arpeggiator and clips, effect
+  racks 2 and 3, and effects Philtre has no counterpart for.
 - **Accuracy:** unison, detune, wavetable position, cutoff, resonance, envelope times and sustain convert with units
   measured on Serum 2.1.5 (published by the serum2-preset-loader project, MIT). The coarse pitch's modulation range and
   the shape of LFO curves were fitted on a kick rendered in Serum 2.1.5 (Philtre's pitch drop then matches within a few
@@ -137,7 +147,7 @@ then turn the data wheel: one step per click on lists and whole numbers. Lists o
 | LFO | LFO n: shape, rate, sync, mode (2nd press: rise, phase) | | | |
 | LFO SHAPE (LFO, 3rd press) | Point, time, level, curve | Shape | Edit (LFO 1-4) | |
 | MOD | Slot n: source, aux, destination, amount (four sub-pages, slots 1-16) | | | |
-| FX | Slot n: effect (tap) and its on / off switch, then P1, P2, P3, mix on the Q-Links (two sub-pages, slots 1-8) | | | |
+| FX | Slot n: effect (tap) and its on / off switch, P1, P2, P3, mix on the Q-Links, its band at the bottom (four sub-pages, slots 1-16) | | | |
 
 ## Presets
 Sixteen original presets in MPC's PRESET menu (`vst/presets.json`, written by `vst/make_presets.py`): Init, Seven Saw Lead,
@@ -149,7 +159,9 @@ Offline (2026-11-02, x86 Xeon 2.1 GHz on a shared VM, relative numbers only): `t
 4.7-4.9%, worst block 6.5-8.1%. Eight voices of the heaviest presets took 3-4.6% of a block, and a worst case (8 voices x
 2 oscillators x 8 unison, sub, noise, ladder filter and all 8 effect slots) 8.7%. The Live II's Cortex-A17 is several
 times slower: the device bench decides (`TESTING.md`). Unison voices, the number of voices (`VOICES` on MAIN) and the
-reverbs cost the most; an oscillator at level 0, a filter set Off and an empty slot cost nothing.
+reverbs cost the most; an oscillator at level 0, a filter set Off and an empty slot cost nothing. With 16 slots (0.5.0,
+2026-11-11, same kind of VM): that worst case took 4.7% with no effect, 6.2% with 8 slots on, 7.1% with all 16 (two
+reverbs, two delays), 7.2% with a Splitter and three slots on its bands.
 
 ## Build, test, package
 From `ports/philtre`:
@@ -178,6 +190,8 @@ displays (redrawing costs MPC's screen thread a lot), dragging effects to reorde
 in the matrix, sample-based noise, MPE, and a 2.x skin (the skin is MPC OS 3.x only).
 
 ## Changes
+- 0.5.0 (2026-11-11): 16 effect slots (slots 9-16 and their matrix destinations appended), the Splitter effect and a
+  band selector per slot; the Serum 2 import keeps Serum's Splitter and the effects in its bands.
 - 0.4.0 (2026-11-11): an on / off switch per effect slot (`fx1_on` ... `fx8_on`, appended: projects and presets from
   before have their slots on). The Serum 2 import keeps effects switched off in Serum as slots switched off (the
   effects that are on keep their slots first).

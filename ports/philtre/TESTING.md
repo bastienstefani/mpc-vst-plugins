@@ -50,6 +50,16 @@ To calibrate a `[g]` unit: in Serum 2, save Init, then the same with one control
 | Skin | `skin_check`, `tools/studio.py preview` of FX 1-4 and 5-8 | the switch sits right of a narrower `EFFECT` list (152 px); no overlap but the open lists' (as before) |
 | Host test x86 and aarch64, builds | as for 0.1.0 | PASSED; armv7 and aarch64 without warnings, glibc 2.29 / 2.34 |
 
+## Offline, 0.5.0 (2026-11-11): 16 effect slots and the Splitter
+| Check | How | Result |
+|---|---|---|
+| Engine | `test/test_editors.c` (run by `test/run.sh`, ASan/UBSan) | PASSED: slot 16 plays; a Splitter comes with its mix at 100 and, with nothing on its bands, gives back what went in (level and brightness within 1 %); a 20 Hz low-pass on Band 3 (over 2 kHz) halves the brightness and keeps the level; on Band 1 (under 60 Hz) it leaves a middle C as it was; Left / Right with the low-pass on Band 2 silences the right channel only; a slot set to All after the bands plays on them joined; the Splitter switched off leaves the band slots on the whole sound; a saved state keeps the Splitter, its mode and the bands (3.1 kB); its knobs and mode are named |
+| Serum import | `test/test_import.py` | PASSED: Serum's Splitter (145 Hz) with the HyperD counted in its band 2 comes as Philtre's Splitter with the Ensemble on Band 3, the effects after it on All; 18 effects with six off: the twelve on keep their slots, the first four off ones fill the rest |
+| The user's kick | converted again and rendered | 11 slots (EQ, Distortion, four switched off, Distortion, Splitter, Ensemble on Band 3, Multiband); level and spectrum as before; the same state without the Splitter (the Ensemble on the whole sound) is 4 dB lower |
+| CPU, relative | a worst-case harness (8 voices x 2 oscillators x 8 unison, sub, noise, ladder filter), x86 | 4.7% of real time with no effect, 6.2% with 8 slots on, 7.1% with 16, 7.2% with a Splitter and three slots on its bands |
+| Skin | `skin_check`, previews of FX 1-4 ... 13-16 and MOD | four FX sub-pages; the band selector (ALL, BAND 1-3) sits at the foot of each slot, with no name so it clears the MIX knob; the destination list has an FX 9-16 column |
+| Host test x86 and aarch64, builds | as for 0.1.0 | PASSED (400 parameters); armv7 and aarch64 without warnings, glibc 2.29 / 2.34 |
+
 ## On the device (MPC Live II, to do)
 Install: unzip `Philtre-<version>-mpc-armv7.zip` on the MPC and run `./install.sh` as root (it stops MPC, backs up
 `MPC.settings`, registers the plugin and starts MPC), or drop the zip into the MPC plugin installer app.
@@ -79,5 +89,6 @@ Install: unzip `Philtre-<version>-mpc-armv7.zip` on the MPC and run `./install.s
 | 21 | Imported table | convert with `--tables`, copy `wavetables/serum2/` | OSC A shows the table's name and plays it after a moment |
 | 22 | Compared to Serum | play the same preset in Serum 2 and on the MPC | note what differs most (LFO rates, levels, filter type): the `[g]` units to calibrate first |
 | 23 | FX switch | FX tab: put Distortion in slot 1, play, tap its switch off and on | the sound loses and gets back the distortion, without a click; the switch shows the state after a project reload |
+| 24 | Splitter | FX tab: slot 1 Splitter (3 bands), slot 2 Distortion on Band 3, slot 3 Reverb on All; press FX for slots 5-16 | only the highs distort, the reverb takes the whole sound; FX pages 1-4 ... 13-16 cycle |
 
 Record the results here and in `tested.json` (device, MPC OS version, date).

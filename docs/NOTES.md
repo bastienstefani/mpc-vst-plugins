@@ -2207,3 +2207,12 @@ MPC's load screen refused `kick_0.4.0.xpl` (a Philtre preset written by `serum2_
 ASCII letters, digits, spaces, `-` and `_` only (at most 32 characters). To check on the device: the same file renamed
 `kick.xpl`, and the shipped `0000-Default.xpl` from the same screen.
 
+### 2026-11-11: Philtre 0.5.0, 16 effect slots and a Splitter (offline only)
+- A port that outgrows a block of contiguous parameters (slots 1-8 were `fxN_type, p1, p2, p3, mix` side by side, the
+  engine indexing them as `P_FX1_TYPE + 5 * k`) can append the new ones anywhere if `make_params.py` generates a table
+  of each slot's parameter indices (`FXP[slot][role]`) and the engine builds the reverse (parameter -> slot, role) once.
+  Projects and presets keep their indices; option lists (effect types, matrix destinations) only grow at the end.
+- Serum 2's `FXSplit` is read as: `kParamModuleCountN` effects after it play in band N (0, 1, 2 = low, mid, high),
+  `kParamFreq` the first crossover; the second crossover's key and default, and the mode's, are not known yet (one
+  preset seen). The converter maps them to Philtre's Splitter and band selectors.
+

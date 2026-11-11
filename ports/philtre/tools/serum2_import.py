@@ -19,7 +19,7 @@ the payload once decompressed, a uint32 LE format version (2), then a Zstandard 
 Python 3.14's `compression.zstd` or the `zstandard` package (`pip install zstandard`); CBOR is decoded here.
 
 Philtre is not Serum: two wavetable oscillators (Serum has three), one filter (two), four LFOs (ten), 16 matrix slots
-(64), eight effect slots, and its own effects. What has no counterpart is listed in the report ("x"), and what is
+(64), 16 effect slots, and its own effects. What has no counterpart is listed in the report ("x"), and what is
 converted with a unit that was not measured is marked "~". The units come from three places, marked in the tables
 below: [m] measured on Serum 2.1.5 (a DawDreamer probe published with serum2-preset-loader, MIT), [f] read off preset
 files, [s] seen on Serum 2's Init screen, [g] guessed (Serum 1 behaviour or the default lining up). A [g] is a calibration to do: save a Serum preset
@@ -856,7 +856,7 @@ class Converter:
                 ph.drop("effect rack %d (Philtre has one rack)" % (r + 1))
         if not isinstance(rack, list):
             return
-        chain, in_band = [], 0
+        chain, bands = [], []                           # bands: the band of each next effect, after a Splitter
         for fx in rack:
             if not isinstance(fx, dict):
                 continue
@@ -864,31 +864,42 @@ class Converter:
             if not kind:
                 continue
             q = pp(fx[kind])
-            if in_band:                                     # inside one of the splitter's bands
-                in_band -= 1
-                if num(q, "kParamEnable", 1) >= 0.5:
-                    ph.drop("effect %s: in a band of the Splitter (Philtre has no band split)" % kind[2:])
-                continue
-            if "split" in kind.lower():                    # [f] kParamModuleCountN: how many next effects go to band N
-                in_band = sum(max(0, int(num(q, "kParamModuleCount%d" % b, 0))) for b in range(4))
-                ph.drop("effect Splitter (Philtre has no band split)")
-                continue
-            got = self.fx_one(kind, q)
+            band = bands.pop(0) if bands else 0
+            if "split" in kind.lower():
+                # [f] kParamModuleCountN: the next effects in band N (0, 1, 2 = Philtre's Band 1, 2, 3 [g]); the bands
+                # join again after them, as Philtre's do at the next slot set to All
+                bands = [b + 1 for b in range(3) for _ in range(max(0, int(num(q, "kParamModuleCount%d" % b, 0))))]
+                got = self.splitter(q)
+                band = 0
+            else:
+                got = self.fx_one(kind, q)
             if not got:
-                ph.drop("effect %s" % kind[2:])
+                ph.drop("effect %s" % kind[2:] + (" (in band %d of a Splitter)" % band if band else ""))
                 continue
-            chain.append((kind[2:], got, num(q, "kParamEnable", 1) >= 0.5))   # [f] kParamEnable 0: switched off
-        while len(chain) > 8:                              # 8 slots: an effect switched off gives its slot up first
+            chain.append((kind[2:], got, num(q, "kParamEnable", 1) >= 0.5, band))   # [f] kParamEnable 0: switched off
+        n_slots = mp.FX_SLOTS
+        while len(chain) > n_slots:                        # an effect switched off gives its slot up first
             i = max((j for j, c in enumerate(chain) if not c[2]), default=len(chain) - 1)
-            ph.drop("effect %s%s: Philtre has 8 slots" % (chain[i][0], "" if chain[i][2] else " (off in Serum)"))
+            ph.drop("effect %s%s: Philtre has %d slots" % (chain[i][0], "" if chain[i][2] else " (off in Serum)", n_slots))
             del chain[i]
-        for slot, (name, (t, p1, p2, p3, mix), on) in enumerate(chain, 1):
+        for slot, (name, (t, p1, p2, p3, mix), on, band) in enumerate(chain, 1):
             ph.set("fx%d_type" % slot, t)
             ph.set("fx%d_on" % slot, "On" if on else "Off")
+            ph.set("fx%d_band" % slot, band)
             for key, val in (("p1", p1), ("p2", p2), ("p3", p3), ("mix", mix)):
                 if val is not None:
                     ph.set("fx%d_%s" % (slot, key), val)
-            ph.approx("effect %s -> %s%s (settings [g])" % (name, t, "" if on else ", switched off as in Serum"))
+            ph.approx("effect %s -> %s%s%s (settings [g])" % (name, t, "" if on else ", switched off as in Serum",
+                                                             ", on Band %d of the Splitter" % band if band else ""))
+
+    @staticmethod
+    def splitter(q):
+        """Serum's Splitter -> Philtre's: crossovers (Hz) on P1 / P2, the mode on P3 (stepped in quarters), mix 100."""
+        f1, f2 = num(q, "kParamFreq", 200.0), num(q, "kParamFreq2", 2000.0)   # [f] kParamFreq; [g] the second, defaults
+        mode = " ".join(str(v) for v in q.values() if isinstance(v, str)).lower().replace(" ", "")
+        m = 3 if ("ms" in mode or "midside" in mode) else 2 if ("lr" in mode or "leftright" in mode) else 0   # [g]
+        pct = lambda f: 100 * math.log(max(20.0, min(20000.0, f)) / 20) / math.log(1000)  # noqa: E731
+        return "Splitter", pct(f1), pct(f2), (m + 0.5) * 25, 100
 
     @staticmethod
     def fx_one(kind, q):

@@ -6,6 +6,7 @@ line, to the file named by its argument, for test/test_states.c to load into the
     python3 test/test_import.py [states.txt]       (needs Python 3.14+ or the zstandard package; exits 77 to skip)
 """
 import json
+import math
 import os
 import re
 import struct
@@ -196,11 +197,8 @@ def main():
     t3["Macro2"] = {"name": "WIDE", "plainParams": {"kParamValue": 70.0}}
     t3["Macro0"] = {"name": "M1", "plainParams": {"kParamValue": 55.0}}
     off = {"kParamEnable": 0.0}
-    t3["FXRack0"]["FX"] = [{"type": 0, "FXDistortion": {"plainParams": {}}}, {"type": 0, "FXDistortion": {"plainParams": off}},
-                           {"type": 2, "FXDelay": {"plainParams": {}}}, {"type": 4, "FXReverb": {"plainParams": {}}},
-                           {"type": 1, "FXChorus": {"plainParams": off}}, {"type": 3, "FXFlanger": {"plainParams": {}}},
-                           {"type": 6, "FXPhaser": {"plainParams": {}}}, {"type": 7, "FXEQ": {"plainParams": {}}},
-                           {"type": 8, "FXFilter": {"plainParams": {}}}, {"type": 0, "FXDistortion": {"plainParams": off}}]
+    kinds = ["FXDistortion", "FXDelay", "FXReverb", "FXFlanger", "FXPhaser", "FXEQ", "FXFilter", "FXChorus"]
+    t3["FXRack0"]["FX"] = [{"type": 0, kinds[i % 8]: {"plainParams": off if i % 3 == 1 else {}}} for i in range(18)]
     t3["LFO1"]["plainParams"] = {"kParamBeatSync": 0.0, "kParamRate": 1.0068}
     t3["LFO2"]["plainParams"] = {"kParamRate": 1.627}
 
@@ -292,16 +290,20 @@ def main():
     check(m[4][:2] == ("Velocity", "Drive") and abs(m[4][2] - 10) < 0.01, "slot 4: --source 23=Velocity")
     check(m[5][0] == "Off", "no more slots")
     check("Serum source #22 not known" in report, "an unknown source is named in the report")
-    fx = [(o("fx%d_type" % i), v2["fx%d_mix" % i]) for i in range(1, 9)]
-    check([f[0] for f in fx[:7]] == ["Distortion", "Delay", "Distortion", "Reverb", "EQ", "Multiband", "Off"],
-          "effects in order; Bode, the splitter and the effect in its band left out: %s" % fx[:7])
-    check([v2["fx%d_on" % i] for i in range(1, 7)] == ["1", "1", "0", "1", "1", "1"] and near(v2["fx3_p1"], 90, 0.01),
+    fx = [(o("fx%d_type" % i), o("fx%d_band" % i)) for i in range(1, 17)]
+    check(fx[:9] == [("Distortion", "All"), ("Delay", "All"), ("Distortion", "All"), ("Splitter", "All"),
+                     ("Ensemble", "Band 3"), ("Reverb", "All"), ("EQ", "All"), ("Multiband", "All"), ("Off", "All")],
+          "effects in order, Bode left out; the Splitter's band 2 (Serum's count) holds the HyperD, as Band 3: %s" % fx[:9])
+    check(near(v2["fx4_p1"], 100 * math.log(145 / 20) / math.log(1000), 0.01) and near(v2["fx4_p2"], 66.667, 0.01)
+          and int(float(v2["fx4_p3"]) / 25) == 0 and near(v2["fx4_mix"], 100, 0.01),
+          "Splitter: 145 Hz and 2 kHz crossovers, 3 bands, mix 100")
+    check([v2["fx%d_on" % i] for i in range(1, 9)] == ["1", "1", "0", "1", "1", "1", "1", "1"] and near(v2["fx3_p1"], 90, 0.01),
           "the distortion switched off in Serum is kept, switched off, with its settings")
-    check("effect Splitter" in report and "HyperD: in a band of the Splitter" in report, "the splitter and its band reported")
-    check(near(v2["fx5_p1"], 50 + 11.4 / 36 * 100, 0.1) and near(v2["fx5_p3"], 50 + 11.8 / 36 * 100, 0.1)
-          and near(v2["fx5_p2"], 73.6, 0.2) and near(v2["fx5_mix"], 50, 0.01),
+    check("HyperD -> Ensemble, on Band 3 of the Splitter" in report, "the report says which band an effect plays on")
+    check(near(v2["fx7_p1"], 50 + 11.4 / 36 * 100, 0.1) and near(v2["fx7_p3"], 50 + 11.8 / 36 * 100, 0.1)
+          and near(v2["fx7_p2"], 73.6, 0.2) and near(v2["fx7_mix"], 50, 0.01),
           "EQ: 87 Hz +11.4 dB on the low shelf, 1428 Hz +11.8 dB on the peak, high shelf flat")
-    check(near(v2["fx6_p1"], 30, 0.01) and near(v2["fx6_mix"], 50, 0.01), "multiband compressor: half depth, in parallel")
+    check(near(v2["fx8_p1"], 30, 0.01) and near(v2["fx8_mix"], 50, 0.01), "multiband compressor: half depth, in parallel")
     check(int(float(v2["fx1_p2"]) / 100 * 9) == 3 and near(v2["fx1_p1"], 60) and near(v2["fx2_p2"], 45),
           "distortion mode Diode, drive; delay feedback")
     check("effect Bode" in report and "effect rack 2" in report, "the report names the Bode and the second rack")
@@ -317,11 +319,12 @@ def main():
           "LFO 5 (Philtre has four LFOs)" in report, "four LFOs kept, the fifth reported")
     check(o3("m1_dst") == "A Pos", "Serum B's position follows it to Philtre's A")
     check(len(v3["l1_pts"].split("/")) == 16, "31 LFO points -> 16")
-    fx3 = [(o3("fx%d_type" % i), v3["fx%d_on" % i]) for i in range(1, 9)]
-    check(fx3 == [("Distortion", "1"), ("Distortion", "0"), ("Delay", "1"), ("Reverb", "1"), ("Flanger", "1"),
-                  ("Phaser", "1"), ("EQ", "1"), ("Filter", "1")]
-          and "effect Chorus (off in Serum): Philtre has 8 slots" in report,
-          "ten effects, three off: the seven on keep their slots, the first off one fills the eighth (%s)" % fx3)
+    names = {"FXDistortion": "Distortion", "FXDelay": "Delay", "FXReverb": "Reverb", "FXFlanger": "Flanger",
+             "FXPhaser": "Phaser", "FXEQ": "EQ", "FXFilter": "Filter", "FXChorus": "Chorus"}
+    want = [(names[kinds[i % 8]], "0" if i % 3 == 1 else "1") for i in range(18) if i not in (13, 16)]
+    fx3 = [(o3("fx%d_type" % i), v3["fx%d_on" % i]) for i in range(1, 17)]
+    check(fx3 == want and report.count("(off in Serum): Philtre has 16 slots") == 2,
+          "18 effects, six off: the twelve on keep their slots, the first four off ones fill the rest (%s)" % fx3)
     check(o3("l2_sync") == "Off" and near(v3["l2_rate"], si.lrate_x(1.0068), 0.01) and o3("l3_sync") == "1/1"
           and o3("l4_sync") == "1/4", "LFO rates: free 1 Hz stays 1 Hz, 1.627 synced is 1 bar, the default is 1/4 (%s %s %s)"
           % (v3["l2_rate"], o3("l3_sync"), o3("l4_sync")))

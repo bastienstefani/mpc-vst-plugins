@@ -32,6 +32,7 @@ import re
 import shutil
 import struct
 import sys
+import unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PORT = os.path.dirname(HERE)
@@ -982,8 +983,13 @@ def vst_info():
 
 
 def safe_name(s):
-    s = re.sub(r"[^\w .,()+&'-]", "_", s, flags=re.UNICODE).strip(" .")
-    return re.sub(r"\s+", " ", s)[:60] or "Serum preset"
+    """A file name MPC's browser should take: ASCII letters and digits, spaces, - and _ only, at most 32 characters
+    (MPC's load screen said "invalid filename" for kick_0.4.0.xpl, 2026-11-11; the extra dots are the likely cause, not
+    yet confirmed). The report keeps the preset's full name."""
+    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
+    s = re.sub(r"[^A-Za-z0-9 _-]+", "-", s)
+    s = re.sub(r"\s+", " ", s).strip(" -_")
+    return s[:32].rstrip(" -_") or "Serum preset"
 
 
 def index_tables(root):
@@ -1087,14 +1093,15 @@ def main(argv):
         if len(state) + 1 > 8192:
             report.append("%s\n  x not converted: state too large\n" % f)
             continue
-        base = safe_name(name)
-        while base.lower() in names:
-            base += "+"
+        base, k = safe_name(name), 2
+        while base.lower() in names:                   # the same name twice: "Name 2", "Name 3"...
+            base = "%s %d" % (safe_name(name)[:29].rstrip(" -_"), k)
+            k += 1
         names.add(base.lower())
         dst = os.path.join(opts["out"], "Presets", base + ".xpl")
         with open(dst, "w", encoding="utf-8") as fh:
             fh.write(xpl.xpl(info["name"], info["vendor"], so_path, uid, info.get("version", 1000),
-                             state.encode() + b"\0", preset=name))
+                             state.encode() + b"\0", preset=base))   # the file's name: MPC may build a path from it
         n_ok += 1
         lines = ["%s -> Presets/%s.xpl%s" % (f, base, ("  (by %s)" % meta["presetAuthor"]) if meta.get("presetAuthor") else "")]
         lines += ["  %s %s" % n for n in ph.notes]

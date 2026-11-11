@@ -2201,3 +2201,9 @@ same tempo and note. Facts about Serum 2's format and sound, read off that pair 
 - Philtre's Multiband has no make-up gain: at depth 60 the kick lost 15 dB that Serum's multiband compressor (with band
   gains) keeps; the converter now plays it in parallel at half depth.
 
+### 2026-11-11: "invalid filename" loading an imported .xpl (device, user report, MPC Live II)
+MPC's load screen refused `kick_0.4.0.xpl` (a Philtre preset written by `serum2_import.py`, renamed by hand) with
+"invalid filename". The extra dots in the name are the suspect, not yet confirmed: the converter now writes names of
+ASCII letters, digits, spaces, `-` and `_` only (at most 32 characters). To check on the device: the same file renamed
+`kick.xpl`, and the shipped `0000-Default.xpl` from the same screen.
+

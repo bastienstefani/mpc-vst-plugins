@@ -212,7 +212,10 @@ def main():
                       "destModuleParamName": "kParamCoarsePit", "plainParams": {"kParamAmount": 18.75, "kParamBipolar": 1.0}}
     t4["ModSlot1"] = {"source": [3, 0], "destModuleTypeString": "Oscillator", "destModuleID": 0,
                       "destModuleParamName": "kParamCoarsePit", "plainParams": {"kParamAmount": 40.0}}
-    files = {"init.SerumPreset": preset_bytes(t1, "Init Test"), "kick.SerumPreset": preset_bytes(t4, "Kick Test"), "full.SerumPreset": preset_bytes(t2, "Full / Test"),
+    files = {"init.SerumPreset": preset_bytes(t1, "Init Test"), "kick.SerumPreset": preset_bytes(t4, "Kick Test"),
+             "dots1.SerumPreset": preset_bytes(t1, "kick_0.4.0 \u00c9t\u00e9"),
+             "dots2.SerumPreset": preset_bytes(t1, "kick_0.4.0 \u00c9t\u00e9"),
+             "full.SerumPreset": preset_bytes(t2, "Full / Test"),
              "sub/three.SerumPreset": preset_bytes(t3, "Three Osc"),
              "bad-magic.SerumPreset": b"not a preset at all",
              "cut.SerumPreset": preset_bytes(t1)[:-20],
@@ -230,8 +233,10 @@ def main():
     check(r.returncode == 0, "the converter runs (%s)" % (r.stderr.strip()[-300:] or "exit 0"))
     report = open(os.path.join(out, "import-report.txt"), encoding="utf-8").read()
     names = sorted(os.listdir(os.path.join(out, "Presets")))
-    check(names == ["Full _ Test.xpl", "Init Test.xpl", "Kick Test.xpl", "Three Osc.xpl"],
-          "four presets, named after them: %s" % names)
+    check(names == ["Full - Test.xpl", "Init Test.xpl", "Kick Test.xpl", "Three Osc.xpl", "kick_0-4-0 Ete 2.xpl",
+                    "kick_0-4-0 Ete.xpl"],
+          "presets named after them, with only letters, digits, spaces, - and _ (no extra dots: MPC refused "
+          "kick_0.4.0.xpl), numbered when two names meet: %s" % names)
     for bad in ("bad-magic", "cut", "deep", "notmap", "huge-len"):
         check(re.search(r"%s\.SerumPreset\n  x not converted" % bad, report) is not None, "%s is refused in the report" % bad)
     check(os.path.exists(os.path.join(out, "wavetables", "serum2", "Default Shapes.wav")), "--tables copies a used table")
@@ -246,7 +251,7 @@ def main():
           "init: Env 1 is 1 ms / 1 s / 0 dB / 15 ms (e1 %s %s %s %s)" % (v1["e1_a"], v1["e1_d"], v1["e1_s"], v1["e1_r"]))
     check(v1["f_on"] == "0" and "l1_pts" not in v1 and v1["m1_src"] == "0", "init: no filter, no matrix, no points")
 
-    s2 = state_of(os.path.join(out, "Presets", "Full _ Test.xpl"))
+    s2 = state_of(os.path.join(out, "Presets", "Full - Test.xpl"))
     v2 = values(s2)
     opts = {p["key"]: p.get("options") for p in si.mp.P}
     o = lambda k: opts[k][int(v2[k])]  # noqa: E731

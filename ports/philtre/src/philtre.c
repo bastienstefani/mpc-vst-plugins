@@ -140,11 +140,11 @@ typedef struct {
     char pend_name[2][256];       /* a table restored by file name before the library knew it */
     /* effects */
     fxslot_t fx[FX_SLOTS];
-    float fxmod[FX_SLOTS][2];
     float gain_cur, dc_x[2], dc_y[2];
     float mixL[128], mixR[128];
     float fxg[FX_SLOTS];          /* each slot's on/off gain, ramped over a block so a switch does not click */
     float dryL[128], dryR[128];   /* the rack's input to a slot while that ramp runs */
+    float band[3][2][128];        /* a Splitter's bands, [band][channel][frame] */
     /* LFO points (shape Custom), the curve editors and their displays */
     pts_t pts[4];
     unsigned char chg[NP];        /* params the engine changed by itself, to report (mpc_engine_changed) */
@@ -160,7 +160,11 @@ static unsigned hash(const char *s, size_t n) {
     for (size_t i = 0; i < n && s[i]; i++) h = (h ^ (unsigned char)s[i]) * 16777619u;
     return h;
 }
+static signed char fx_slot_of[NP], fx_role_of[NP];   /* a parameter's effect slot and role (FR_*), or -1 */
 static void ht_init(void) {
+    for (int p = 0; p < NP; p++) fx_slot_of[p] = fx_role_of[p] = -1;
+    for (int k = 0; k < FX_SLOTS; k++)
+        for (int r = 0; r < FX_ROLES; r++) { fx_slot_of[FXP[k][r]] = (signed char)k; fx_role_of[FXP[k][r]] = (signed char)r; }
     for (int i = 0; i < HT; i++) htab[i] = -1;
     for (int p = 0; p < NP; p++) {
         unsigned h = hash(PH_P[p].key, 64) & (HT - 1);
@@ -1216,15 +1220,15 @@ static void set_value(ph_t *s, int p, float x) {
         if (x > last) x = last < WT_NB ? WT_NB - 1 : last;
     }
     if (p == P_MODE && x != s->v[p]) all_off(s, 0);
-    if (p >= P_FX1_ON && p <= P_FX8_ON && x >= 0.5f && s->v[p] < 0.5f) {   /* back on: from a clean state, not the old tail */
-        int k = p - P_FX1_ON;
-        if (s->fx[k].type != FX_OFF) fx_prepare(&s->fx[k], s->fx[k].type);
+    int fk = fx_slot_of[p], fr = fx_role_of[p];
+    if (fr == FR_ON && x >= 0.5f && s->v[p] < 0.5f) {   /* back on: from a clean state, not the old tail */
+        if (s->fx[fk].type != FX_OFF) fx_prepare(&s->fx[fk], s->fx[fk].type);
     }
     s->v[p] = x;
     if (p == P_A_TABLE || p == P_B_TABLE) request_table(s, p == P_B_TABLE);
-    if (p >= P_FX1_TYPE && p <= P_FX8_MIX && (p - P_FX1_TYPE) % 5 == 0) {
-        int k = (p - P_FX1_TYPE) / 5;
-        if (s->fx[k].type != (int)x) fx_prepare(&s->fx[k], (int)x);   /* allocation here, off the audio thread */
+    if (fr == FR_TYPE && s->fx[fk].type != (int)x) {
+        fx_prepare(&s->fx[fk], (int)x);   /* allocation here, off the audio thread */
+        if ((int)x == FX_SPLITTER) { s->v[FXP[fk][FR_MIX]] = 100; mark(s, FXP[fk][FR_MIX]); }   /* its bands, whole */
     }
     /* the editors follow */
     if (p == P_EV_SEL) { for (int q = P_EV_A; q <= P_EV_RC; q++) mark(s, q); s->disp_dirty |= 1; }
@@ -1291,7 +1295,7 @@ static void state_set(ph_t *s, const char *str) {
             float named = w ? strtof(w + 9, NULL) : 0;
             set_value(s, t, f >= 0 ? (float)(WT_NB + f) : named >= 0 && named < WT_NB ? floorf(named) : 0);
         }
-    for (int k = 0; k < FX_SLOTS; k++) s->fxg[k] = s->v[P_FX1_ON + k] >= 0.5f;   /* a loaded slot starts as it is */
+    for (int k = 0; k < FX_SLOTS; k++) s->fxg[k] = s->v[FXP[k][FR_ON]] >= 0.5f;   /* a loaded slot starts as it is */
 }
 
 static void set_param(void *p, const char *key, const char *val) {
@@ -1345,8 +1349,8 @@ static int display(ph_t *s, int p, char *b, int n) {
         return *nm ? snprintf(b, n, "%s", nm) : snprintf(b, n, "User %d", t - WT_NB + 1);
     }
     case F_FXP: {
-        int k = (p - P_FX1_P1) / 5, w = (p - P_FX1_P1) % 5;
-        return fx_display((int)s->v[P_FX1_TYPE + 5 * k], w, x / 100, s->bpm, b, n);
+        int k = fx_slot_of[p];
+        return k < 0 ? 0 : fx_display((int)s->v[FXP[k][FR_TYPE]], fx_role_of[p] - FR_P1, x / 100, s->bpm, b, n);
     }
     }
     return snprintf(b, n, "%g", x);
@@ -1379,15 +1383,25 @@ static int get_param(void *p, const char *key, char *buf, int n) {
     }
     if (len > 5 && !strcmp(key + len - 5, "_name")) {   /* the FX knobs are named after their slot's effect */
         int id = find_param(key, len - 5);
-        if (id < P_FX1_P1 || id > P_FX8_MIX || (id - P_FX1_TYPE) % 5 == 0) return 0;
-        int k = (id - P_FX1_TYPE) / 5, w = (id - P_FX1_TYPE) % 5 - 1;
-        return snprintf(buf, n, "%s", fx_label((int)s->v[P_FX1_TYPE + 5 * k], w));
+        if (id < 0 || fx_role_of[id] < FR_P1 || fx_role_of[id] > FR_MIX) return 0;
+        int k = fx_slot_of[id];
+        return snprintf(buf, n, "%s", fx_label((int)s->v[FXP[k][FR_TYPE]], fx_role_of[id] - FR_P1));
     }
     int id = find_param(key, len);
     if (id < 0) return 0;
     float x = value_of(s, id);
     if (PH_P[id].integer) return snprintf(buf, n, "%d", (int)x);
     return snprintf(buf, n, "%.6g", x);
+}
+
+/* the Splitter's bands back into the mix, which still holds what went into the Splitter */
+static void join_bands(ph_t *s, float mix, int frames) {
+    for (int i = 0; i < frames; i++) {
+        float l = s->band[0][0][i] + s->band[1][0][i] + s->band[2][0][i];
+        float r = s->band[0][1][i] + s->band[1][1][i] + s->band[2][1][i];
+        s->mixL[i] += (l - s->mixL[i]) * mix;
+        s->mixR[i] += (r - s->mixR[i]) * mix;
+    }
 }
 
 static void render(void *p, int16_t *out, int frames) {
@@ -1421,25 +1435,37 @@ static void render(void *p, int16_t *out, int frames) {
     voice_t *lv = s->vc[s->last_voice].active ? &s->vc[s->last_voice] : NULL;
     sources(s, lv, src);
     matrix(s, src, dm, DST_FX1_P1, N_DST);
+    /* a Splitter (on) cuts the mix into bands; the slots after it set to a band play on that band, and the bands add
+     * back into the mix (by the Splitter's MIX) at the first slot set to All, the next Splitter or the end */
+    int split = 0;
+    float smix = 1;
     for (int k = 0; k < FX_SLOTS; k++) {
         fxslot_t *fx = &s->fx[k];
-        float g0 = s->fxg[k], g1 = s->v[P_FX1_ON + k] >= 0.5f ? 1.0f : 0.0f;
+        const short *P = FXP[k];
+        int type = (int)s->v[P[FR_TYPE]], band = (int)s->v[P[FR_BAND]];
+        float g0 = s->fxg[k], g1 = s->v[P[FR_ON]] >= 0.5f ? 1.0f : 0.0f;
         s->fxg[k] = g1;
-        if ((int)s->v[P_FX1_TYPE + 5 * k] == FX_OFF || fx->type == FX_OFF || (g0 <= 0 && g1 <= 0)) continue;
-        int b = P_FX1_P1 + 5 * k;
-        float pp[4] = {s->v[b] / 100 + dm[DST_FX1_P1 + k], s->v[b + 1] / 100, s->v[b + 2] / 100,
-                       s->v[b + 3] / 100 + dm[DST_FX1_MIX + k]};
-        if (g0 >= 1 && g1 >= 1) { fx_process(fx, pp, s->bpm, s->mixL, s->mixR, frames); continue; }
-        memcpy(s->dryL, s->mixL, sizeof(float) * frames);   /* switched on or off in this block: fade between */
-        memcpy(s->dryR, s->mixR, sizeof(float) * frames);
-        fx_process(fx, pp, s->bpm, s->mixL, s->mixR, frames);
+        if (split && (band == 0 || type == FX_SPLITTER)) { join_bands(s, smix, frames); split = 0; }
+        float pp[4] = {s->v[P[FR_P1]] / 100 + dm[FX_DST_P1[k]], s->v[P[FR_P2]] / 100, s->v[P[FR_P3]] / 100,
+                       s->v[P[FR_MIX]] / 100 + dm[FX_DST_MIX[k]]};
+        if (type == FX_SPLITTER) {
+            if (fx->type == FX_SPLITTER && g1 > 0) { fx_split(fx, pp, s->mixL, s->mixR, s->band, frames); split = 1; smix = clampf(pp[3], 0, 1); }
+            continue;
+        }
+        if (type == FX_OFF || fx->type == FX_OFF || (g0 <= 0 && g1 <= 0)) continue;
+        float *L = split && band > 0 ? s->band[band - 1][0] : s->mixL, *R = split && band > 0 ? s->band[band - 1][1] : s->mixR;
+        if (g0 >= 1 && g1 >= 1) { fx_process(fx, pp, s->bpm, L, R, frames); continue; }
+        memcpy(s->dryL, L, sizeof(float) * frames);   /* switched on or off in this block: fade between */
+        memcpy(s->dryR, R, sizeof(float) * frames);
+        fx_process(fx, pp, s->bpm, L, R, frames);
         float dg = (g1 - g0) / frames;
         for (int i = 0; i < frames; i++) {
             float g = g0 + dg * (i + 1);
-            s->mixL[i] = s->dryL[i] + (s->mixL[i] - s->dryL[i]) * g;
-            s->mixR[i] = s->dryR[i] + (s->mixR[i] - s->dryR[i]) * g;
+            L[i] = s->dryL[i] + (L[i] - s->dryL[i]) * g;
+            R[i] = s->dryR[i] + (R[i] - s->dryR[i]) * g;
         }
     }
+    if (split) join_bands(s, smix, frames);
     float g0 = s->gain_cur < 0 ? s->vol_g : s->gain_cur, dg = (s->vol_g - g0) / frames;
     for (int i = 0; i < frames; i++) {
         float xl = s->mixL[i] * g0, xr = s->mixR[i] * g0;

@@ -256,9 +256,9 @@ for page in range(4):
     qlinks("MOD %d-%d" % (page * 4 + 1, page * 4 + 4),
            ["m%d_%s" % (page * 4 + c + 1, k) for c in range(4) for k in ("src", "aux", "dst", "amt")])
 
-# ---- FX rack (two sub-pages of four slots) ----
+# ---- FX rack (four sub-pages of four slots) ----
 out.append("\n[tab FX]")
-for page in range(2):
+for page in range(4):
     title = "FX %d-%d" % (page * 4 + 1, page * 4 + 4)
     for c in range(4):
         s = page * 4 + c + 1
@@ -266,10 +266,13 @@ for page in range(2):
         out.append('popup cx=%d cy=172 w=152 h=40 label="EFFECT" key=fx%d_type%s' % (X[c] + 90, s, bk(title)))
         out.append('toggle cx=%d cy=172 ns=0 label="ON" key=fx%d_on%s' % (X[c] + 202, s, bk(title)))   # on / off
         for i, k in enumerate(("p1", "p2", "p3", "mix")):
-            out.append('knob cx=%d cy=%d r=24 label="%s" key=fx%d_%s%s' % (CX[c], 232 + 117 * i, k.upper(), s, k, bk(title)))
-help_text(["Slots run in order,", "1 to 8", "", "Each knob is named", "after its slot's", "effect", "",
-           "The switch by the", "effect turns the", "slot off and on", "", "Press FX again", "for slots 5-8"])
-for page in range(2):
+            out.append('knob cx=%d cy=%d r=24 label="%s" key=fx%d_%s%s' % (CX[c], 230 + 117 * i, k.upper(), s, k, bk(title)))
+        # which band of a Splitter before it the slot plays on
+        out.append('enum_h cx=%d cy=678 label="" key=fx%d_band sw=52%s' % (CX[c], s, bk(title)))
+help_text(["Slots run in order,", "1 to 16. The switch", "by the effect turns", "a slot off and on.", "",
+           "A Splitter cuts the", "sound into bands: a", "slot after it set to", "Band 1-3 plays on", "that band; the bands",
+           "join again at the", "next slot set to All.", "", "Press FX again", "for the next 4 slots"])
+for page in range(4):
     qlinks("FX %d-%d" % (page * 4 + 1, page * 4 + 4),
            ["fx%d_%s" % (page * 4 + c + 1, k) for c in range(4) for k in ("p1", "p2", "p3", "mix")])
 

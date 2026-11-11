@@ -34,10 +34,14 @@ DEST_GROUPS = [
     ("LFO", ["LFO1 Rate", "LFO2 Rate", "LFO3 Rate", "LFO4 Rate"]),
     ("FX P1", ["FX1 P1", "FX2 P1", "FX3 P1", "FX4 P1", "FX5 P1", "FX6 P1", "FX7 P1", "FX8 P1"]),
     ("FX MIX", ["FX1 Mix", "FX2 Mix", "FX3 Mix", "FX4 Mix", "FX5 Mix", "FX6 Mix", "FX7 Mix", "FX8 Mix"]),
+    # 0.5.0, appended so saved destinations keep their numbers
+    ("FX 9-16", ["FX%d P1" % s for s in range(9, 17)] + ["FX%d Mix" % s for s in range(9, 17)]),
 ]
 DESTS = [d for _, g in DEST_GROUPS for d in g]
 FX_TYPES = ["Off", "Ensemble", "Distortion", "Flanger", "Phaser", "Chorus", "Delay", "Ping Pong", "Compressor",
-            "Multiband", "Reverb", "Plate", "EQ", "Filter"]
+            "Multiband", "Reverb", "Plate", "EQ", "Filter", "Splitter"]   # append only: projects keep the numbers
+FX_SLOTS = 16
+BANDS = ["All", "Band 1", "Band 2", "Band 3"]   # which band of the Splitter before it a slot plays on
 
 # display formats shared with the engine (ph_params.h F_*): how get_param("<key>_display") writes a value
 FMTS = ["NONE", "PCT", "BIP", "INT", "SIGNED", "SEMI", "CENT", "FREQ", "ETIME", "LRATE", "RISE", "GLIDE", "PAN", "BEND",
@@ -181,6 +185,16 @@ for kind, nm in (("envd", "Env View"), ("lfod", "LFO View")):   # display column
 for s in range(1, 9):
     opt("fx%d_on" % s, "FX%d On" % s, ONOFF, 1)
 
+# --- 0.5.0: slots 9-16, and each slot's band of a Splitter ---
+for s in range(9, FX_SLOTS + 1):
+    opt("fx%d_type" % s, "FX%d Type" % s, FX_TYPES, refresh_display=True)
+    for k, d in (("p1", 50), ("p2", 50), ("p3", 50), ("mix", 50)):
+        num("fx%d_%s" % (s, k), "FX%d %s" % (s, k.upper()), 0, 100, d, "FXP", dynamic_name=True)
+for s in range(9, FX_SLOTS + 1):
+    opt("fx%d_on" % s, "FX%d On" % s, ONOFF, 1)
+for s in range(1, FX_SLOTS + 1):
+    opt("fx%d_band" % s, "FX%d Band" % s, BANDS)
+
 
 def params_json():
     out = []
@@ -242,7 +256,16 @@ def c_header():
     L.append("static const float LSYNC_BEATS[%d] = {0, %s};" % (len(LSYNC), ", ".join(
         "%.6ff" % b for b in (16, 8, 4, 2, 4 / 3, 1, 2 / 3, 0.5, 1 / 3, 0.25, 1 / 6, 0.125))))
     L.append("#define N_SLOTS 16")
-    L.append("#define FX_SLOTS 8")
+    L.append("#define FX_SLOTS %d" % FX_SLOTS)
+    idx = {p["key"]: i for i, p in enumerate(P)}
+    roles = ("type", "p1", "p2", "p3", "mix", "on", "band")
+    L.append("enum { %s, FX_ROLES };   /* a slot's parameters, FXP[slot][role] */" % ", ".join("FR_" + r.upper() for r in roles))
+    L.append("static const short FXP[FX_SLOTS][FX_ROLES] = {%s};" % ", ".join(
+        "{%s}" % ", ".join(str(idx["fx%d_%s" % (s, r)]) for r in roles) for s in range(1, FX_SLOTS + 1)))
+    L.append("static const short FX_DST_P1[FX_SLOTS] = {%s};" % ", ".join(
+        "DST_%s" % ident("FX%d P1" % s) for s in range(1, FX_SLOTS + 1)))
+    L.append("static const short FX_DST_MIX[FX_SLOTS] = {%s};" % ", ".join(
+        "DST_%s" % ident("FX%d Mix" % s) for s in range(1, FX_SLOTS + 1)))
     L.append("#define DISP_COLS %d" % DISP_COLS)
     L.append("#define DISP_LEVELS %d" % DISP_LEVELS)
     L.append("#define MAX_POINTS %d" % MAX_POINTS)

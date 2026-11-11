@@ -68,6 +68,8 @@ static float m_rate(float v) { return 0.05f * powf(100.0f, v); }                
 static float m_freq(float v) { return 20.0f * powf(1000.0f, v); }                /* 20 Hz .. 20 kHz */
 static int m_div(float v) { int i = (int)(v * 12); return i < 0 ? 0 : i > 11 ? 11 : i; }
 static int m_dist(float v) { int i = (int)(v * 9); return i < 0 ? 0 : i > 8 ? 8 : i; }
+static int m_split(float v) { int i = (int)(v * 4); return i < 0 ? 0 : i > 3 ? 3 : i; }
+static const char *const SPLIT_NAMES[4] = {"3 Bands", "Low / High", "Left / Right", "Mid / Side"};
 static float m_rt(int plate, float v) { return plate ? 0.3f + 4.7f * v * v : 0.5f + 9.5f * v * v; }
 
 /* buffer floats per type */
@@ -331,6 +333,41 @@ static void multiband(fxslot_t *s, const float *p, float *L, float *R, int n) {
     }
 }
 
+int fx_split(fxslot_t *s, const float p[4], const float *L, const float *R, float bands[3][2][128], int n) {
+    int mode = m_split(p[2]);
+    if (mode >= 2) {   /* left / right, mid / side: two bands, nothing to filter */
+        for (int i = 0; i < n; i++) {
+            float l = L[i], r = R[i];
+            if (mode == 2) { bands[0][0][i] = l; bands[0][1][i] = 0; bands[1][0][i] = 0; bands[1][1][i] = r; }
+            else { float m = 0.5f * (l + r), d = 0.5f * (l - r); bands[0][0][i] = bands[0][1][i] = m; bands[1][0][i] = d; bands[1][1][i] = -d; }
+            bands[2][0][i] = bands[2][1][i] = 0;
+        }
+        return 2;
+    }
+    /* low = LP(x) at the lower crossover, then mid = LP(x - low) at the upper one: the bands sum back to x exactly */
+    float f1 = clampf(m_freq(clampf(p[0], 0, 1)), 20, 0.45f * SR), f2 = clampf(m_freq(clampf(p[1], 0, 1)), 20, 0.45f * SR);
+    if (f2 < f1) { float t = f1; f1 = f2; f2 = t; }
+    float gg[2] = {tanf(PI_F * f1 / SR), tanf(PI_F * f2 / SR)}, k = 1.41421f, a1[2];
+    for (int f = 0; f < 2; f++) a1[f] = 1 / (1 + gg[f] * (gg[f] + k));
+    float *st = s->st;   /* [ch][filter][2] */
+    const float *in[2] = {L, R};
+    for (int c = 0; c < 2; c++)
+        for (int i = 0; i < n; i++) {
+            float x = in[c][i], low = 0, mid = 0, rest = x;
+            for (int f = 0; f < (mode == 0 ? 2 : 1); f++) {
+                float *ic = &st[c * 4 + f * 2], g = gg[f], A1 = a1[f], A2 = g * A1, A3 = g * A2;
+                float v3 = rest - ic[1], v1 = A1 * ic[0] + A2 * v3, v2 = ic[1] + A2 * ic[0] + A3 * v3;
+                ic[0] = 2 * v1 - ic[0]; ic[1] = 2 * v2 - ic[1];
+                if (f == 0) { low = v2; rest = x - low; }
+                else mid = v2;
+            }
+            bands[0][c][i] = low;
+            if (mode == 0) { bands[1][c][i] = mid; bands[2][c][i] = rest - mid; }
+            else { bands[1][c][i] = rest; bands[2][c][i] = 0; }
+        }
+    return mode == 0 ? 3 : 2;
+}
+
 static void reverb(fxslot_t *s, const float *p, int plate, float *L, float *R, int n) {
     static const int HALL[8] = {1433, 1601, 1867, 2053, 2251, 2399, 2617, 2797};
     static const int PLATE_L[8] = {557, 709, 853, 1013, 1151, 1319, 1471, 1609};
@@ -475,6 +512,7 @@ static const char *const LABELS[N_FX][4] = {
     {"SIZE", "DAMPING", "PRE-DELAY", "MIX"},      /* plate */
     {"LOW", "MID FREQ", "MID GAIN", "HIGH"},      /* EQ */
     {"CUTOFF", "RESONANCE", "LP > HP", "MIX"},    /* filter */
+    {"LOW / MID", "MID / HIGH", "MODE", "MIX"},   /* splitter */
 };
 
 const char *fx_label(int type, int k) {
@@ -527,6 +565,9 @@ int fx_display(int type, int k, float v, float bpm, char *b, int n) {
         if (k == 0) return hz(b, n, m_freq(v));
         if (k == 2) return snprintf(b, n, v < 0.25f ? "LP" : v < 0.75f ? "BP" : "HP");
         return snprintf(b, n, "%.0f%%", v * 100);
+    case FX_SPLITTER:
+        if (k == 2) return snprintf(b, n, "%s", SPLIT_NAMES[m_split(v)]);
+        return hz(b, n, m_freq(v));
     }
     return snprintf(b, n, "%.0f%%", v * 100);
 }

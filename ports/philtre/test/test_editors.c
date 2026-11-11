@@ -22,6 +22,23 @@ static int reported(void *s, const char *want) {   /* drains the engine's change
     return seen;
 }
 static void run(void *s, int blocks) { int16_t out[256]; for (int i = 0; i < blocks; i++) E->render(s, out, 128); }
+/* a note's level (RMS, left and right) and brightness (RMS of the step from sample to sample, over the level) */
+static void measure(void *s, float *lv, float *br, float *rv) {
+    uint8_t on[3] = {0x90, 60, 127}, off[3] = {0x80, 60, 0};
+    int16_t out[256]; double sl = 0, sd = 0, sr = 0; float prev = 0; int n = 0;
+    E->midi(s, on, 3);
+    for (int b = 0; b < 30; b++) {
+        E->render(s, out, 128);
+        for (int i = 0; i < 256; i += 2) {
+            float l = out[i] / 32768.0f, r = out[i + 1] / 32768.0f;
+            if (b >= 6) { sl += l * l; sd += (l - prev) * (l - prev); sr += r * r; n++; }
+            prev = l;
+        }
+    }
+    E->midi(s, off, 3);
+    run(s, 60);
+    *lv = sqrtf(sl / n); *br = sqrtf(sd / n) / (*lv + 1e-9f); *rv = sqrtf(sr / n);
+}
 static float disp(void *s, const char *kind, int i) { char k[32]; snprintf(k, sizeof k, "%s_%d", kind, i); return get(s, k); }
 
 /* peak of the left channel over blocks [b0, b1) after a note-on */
@@ -173,6 +190,54 @@ int main(void) {
           "switching off mid-echo fades over a block: no step bigger than the echo's own (%.4f vs %.4f, echo %.3f)",
           jump, natural, echo);
     E->destroy(d);
+
+    /* ---- 16 slots and the Splitter (0.5.0) ---- */
+    void *e = E->create(NULL);
+    set(e, "f_on", 0); set(e, "a_uni", 1); set(e, "vel", 0); set(e, "a_rand", 0);
+    float lv0, br0, rv0, lv, br, rv;
+    measure(e, &lv0, &br0, &rv0);
+    set(e, "fx16_type", FX_DISTORTION); set(e, "fx16_p1", 100); set(e, "fx16_mix", 100);
+    measure(e, &lv, &br, &rv);
+    CHECK(fabsf(lv - lv0) > 0.2f * lv0, "slot 16 plays (level %.3f against %.3f)", lv, lv0);
+    set(e, "fx16_type", FX_OFF);
+    set(e, "fx1_type", FX_SPLITTER);
+    CHECK(get(e, "fx1_mix") == 100, "a Splitter comes with its mix at 100");
+    set(e, "fx1_p1", 100 * logf(200 / 20.0f) / logf(1000)); set(e, "fx1_p2", 100 * logf(2000 / 20.0f) / logf(1000));
+    set(e, "fx1_p3", 12.5f);   /* 3 bands */
+    measure(e, &lv, &br, &rv);
+    CHECK(fabsf(lv - lv0) < 0.01f * lv0 && fabsf(br - br0) < 0.01f * br0,
+          "a Splitter with no slot on its bands gives back what went in (level %.4f / %.4f, brightness %.3f / %.3f)", lv, lv0, br, br0);
+    set(e, "fx2_type", FX_FILTER); set(e, "fx2_p1", 0); set(e, "fx2_p2", 0); set(e, "fx2_p3", 0); set(e, "fx2_mix", 100);   /* a 20 Hz low-pass */
+    set(e, "fx2_band", 3);
+    measure(e, &lv, &br, &rv);
+    CHECK(br < 0.5f * br0 && lv > 0.6f * lv0, "the low-pass on Band 3 (over 2 kHz) takes the highs only (brightness %.3f -> %.3f, level %.3f -> %.3f)",
+          br0, br, lv0, lv);
+    set(e, "fx2_band", 1); set(e, "fx1_p1", 100 * logf(60 / 20.0f) / logf(1000));   /* 12 dB/octave: well under the note */
+    measure(e, &lv, &br, &rv);
+    CHECK(fabsf(lv - lv0) < 0.1f * lv0 && fabsf(br - br0) < 0.1f * br0,
+          "on Band 1 (under 60 Hz) it leaves a middle C nearly as it was (level %.3f / %.3f, brightness %.3f / %.3f)", lv, lv0, br, br0);
+    set(e, "fx1_p3", 62.5f); set(e, "fx2_band", 2);   /* left / right: Band 2 is the right channel */
+    measure(e, &lv, &br, &rv);
+    CHECK(rv < 0.05f * lv && lv > 0.9f * lv0, "Left / Right: the low-pass on Band 2 silences the right channel only (L %.3f, R %.4f)", lv, rv);
+    set(e, "fx3_type", FX_DISTORTION); set(e, "fx3_band", 0); set(e, "fx3_mix", 0);   /* All: the bands join before it */
+    measure(e, &lv, &br, &rv);
+    CHECK(rv < 0.05f * lv, "a slot set to All after them plays on the joined bands (R still %.4f)", rv);
+    set(e, "fx1_on", 0);
+    measure(e, &lv, &br, &rv);
+    CHECK(lv < 0.1f * lv0, "the Splitter switched off: the slots set to a band play on the whole sound (level %.4f)", lv);
+    char st3[8192] = "";
+    E->get_param(e, "state", st3, sizeof st3);
+    void *e2 = E->create(NULL);
+    E->set_param(e2, "state", st3);
+    CHECK(get(e2, "fx1_type") == FX_SPLITTER && get(e2, "fx2_band") == 2 && get(e2, "fx1_p3") == 62.5f && get(e2, "fx1_on") == 0,
+          "a saved state keeps the Splitter, its mode and the bands (%zu bytes of 8192)", strlen(st3));
+    char nm[32];
+    E->get_param(e2, "fx1_p1_name", nm, sizeof nm);
+    CHECK(!strcmp(nm, "LOW / MID"), "the Splitter's knobs are named (\"%s\")", nm);
+    text(e2, "fx1_p3", nm, sizeof nm);
+    CHECK(!strcmp(nm, "Left / Right"), "and its mode shows (\"%s\")", nm);
+    E->destroy(e2);
+    E->destroy(e);
     E->destroy(s);
     printf("%s\n", fails ? "FAILED" : "PASSED");
     return fails != 0;

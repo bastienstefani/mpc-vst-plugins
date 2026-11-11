@@ -21,4 +21,7 @@ void fx_free(fxslot_t *s);
 int fx_prepare(fxslot_t *s, int type);   /* 0 on success; resets the state */
 void fx_process(fxslot_t *s, const float p[4], float bpm, float *L, float *R, int n);
 const char *fx_label(int type, int k);   /* k = 0..3: the three controls, then the fourth (usually MIX) */
+/* the Splitter: L / R into bands[band][channel][i] that add back to the input exactly (unused bands silent): p[0], p[1]
+ * the crossovers, p[2] the mode (3 bands, low / high, left / right, mid / side); returns the number of bands */
+int fx_split(fxslot_t *s, const float p[4], const float *L, const float *R, float bands[3][2][128], int n);
 int fx_display(int type, int k, float v, float bpm, char *buf, int n);

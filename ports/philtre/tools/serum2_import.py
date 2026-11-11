@@ -855,7 +855,7 @@ class Converter:
                 ph.drop("effect rack %d (Philtre has one rack)" % (r + 1))
         if not isinstance(rack, list):
             return
-        slot, in_band = 0, 0
+        chain, in_band = [], 0
         for fx in rack:
             if not isinstance(fx, dict):
                 continue
@@ -872,22 +872,22 @@ class Converter:
                 in_band = sum(max(0, int(num(q, "kParamModuleCount%d" % b, 0))) for b in range(4))
                 ph.drop("effect Splitter (Philtre has no band split)")
                 continue
-            if num(q, "kParamEnable", 1) < 0.5:              # [f] switched off in Serum
-                continue
-            if slot >= 8:
-                ph.drop("effect %s: Philtre has 8 slots" % kind[2:])
-                continue
             got = self.fx_one(kind, q)
             if not got:
                 ph.drop("effect %s" % kind[2:])
                 continue
-            slot += 1
-            t, p1, p2, p3, mix = got
+            chain.append((kind[2:], got, num(q, "kParamEnable", 1) >= 0.5))   # [f] kParamEnable 0: switched off
+        while len(chain) > 8:                              # 8 slots: an effect switched off gives its slot up first
+            i = max((j for j, c in enumerate(chain) if not c[2]), default=len(chain) - 1)
+            ph.drop("effect %s%s: Philtre has 8 slots" % (chain[i][0], "" if chain[i][2] else " (off in Serum)"))
+            del chain[i]
+        for slot, (name, (t, p1, p2, p3, mix), on) in enumerate(chain, 1):
             ph.set("fx%d_type" % slot, t)
+            ph.set("fx%d_on" % slot, "On" if on else "Off")
             for key, val in (("p1", p1), ("p2", p2), ("p3", p3), ("mix", mix)):
                 if val is not None:
                     ph.set("fx%d_%s" % (slot, key), val)
-            ph.approx("effect %s -> %s (settings [g])" % (kind[2:], t))
+            ph.approx("effect %s -> %s%s (settings [g])" % (name, t, "" if on else ", switched off as in Serum"))
 
     @staticmethod
     def fx_one(kind, q):

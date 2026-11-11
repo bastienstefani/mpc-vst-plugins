@@ -195,6 +195,12 @@ def main():
                       "destModuleParamName": "kParamAttack", "plainParams": {"kParamAmount": 10.0}}
     t3["Macro2"] = {"name": "WIDE", "plainParams": {"kParamValue": 70.0}}
     t3["Macro0"] = {"name": "M1", "plainParams": {"kParamValue": 55.0}}
+    off = {"kParamEnable": 0.0}
+    t3["FXRack0"]["FX"] = [{"type": 0, "FXDistortion": {"plainParams": {}}}, {"type": 0, "FXDistortion": {"plainParams": off}},
+                           {"type": 2, "FXDelay": {"plainParams": {}}}, {"type": 4, "FXReverb": {"plainParams": {}}},
+                           {"type": 1, "FXChorus": {"plainParams": off}}, {"type": 3, "FXFlanger": {"plainParams": {}}},
+                           {"type": 6, "FXPhaser": {"plainParams": {}}}, {"type": 7, "FXEQ": {"plainParams": {}}},
+                           {"type": 8, "FXFilter": {"plainParams": {}}}, {"type": 0, "FXDistortion": {"plainParams": off}}]
     t3["LFO1"]["plainParams"] = {"kParamBeatSync": 0.0, "kParamRate": 1.0068}
     t3["LFO2"]["plainParams"] = {"kParamRate": 1.627}
 
@@ -282,13 +288,15 @@ def main():
     check(m[5][0] == "Off", "no more slots")
     check("Serum source #22 not known" in report, "an unknown source is named in the report")
     fx = [(o("fx%d_type" % i), v2["fx%d_mix" % i]) for i in range(1, 9)]
-    check([f[0] for f in fx[:6]] == ["Distortion", "Delay", "Reverb", "EQ", "Multiband", "Off"],
-          "effects in order; Bode, the one switched off, the splitter and the effect in its band left out: %s" % fx[:6])
+    check([f[0] for f in fx[:7]] == ["Distortion", "Delay", "Distortion", "Reverb", "EQ", "Multiband", "Off"],
+          "effects in order; Bode, the splitter and the effect in its band left out: %s" % fx[:7])
+    check([v2["fx%d_on" % i] for i in range(1, 7)] == ["1", "1", "0", "1", "1", "1"] and near(v2["fx3_p1"], 90, 0.01),
+          "the distortion switched off in Serum is kept, switched off, with its settings")
     check("effect Splitter" in report and "HyperD: in a band of the Splitter" in report, "the splitter and its band reported")
-    check(near(v2["fx4_p1"], 50 + 11.4 / 36 * 100, 0.1) and near(v2["fx4_p3"], 50 + 11.8 / 36 * 100, 0.1)
-          and near(v2["fx4_p2"], 73.6, 0.2) and near(v2["fx4_mix"], 50, 0.01),
+    check(near(v2["fx5_p1"], 50 + 11.4 / 36 * 100, 0.1) and near(v2["fx5_p3"], 50 + 11.8 / 36 * 100, 0.1)
+          and near(v2["fx5_p2"], 73.6, 0.2) and near(v2["fx5_mix"], 50, 0.01),
           "EQ: 87 Hz +11.4 dB on the low shelf, 1428 Hz +11.8 dB on the peak, high shelf flat")
-    check(near(v2["fx5_p1"], 30, 0.01) and near(v2["fx5_mix"], 50, 0.01), "multiband compressor: half depth, in parallel")
+    check(near(v2["fx6_p1"], 30, 0.01) and near(v2["fx6_mix"], 50, 0.01), "multiband compressor: half depth, in parallel")
     check(int(float(v2["fx1_p2"]) / 100 * 9) == 3 and near(v2["fx1_p1"], 60) and near(v2["fx2_p2"], 45),
           "distortion mode Diode, drive; delay feedback")
     check("effect Bode" in report and "effect rack 2" in report, "the report names the Bode and the second rack")
@@ -304,6 +312,11 @@ def main():
           "LFO 5 (Philtre has four LFOs)" in report, "four LFOs kept, the fifth reported")
     check(o3("m1_dst") == "A Pos", "Serum B's position follows it to Philtre's A")
     check(len(v3["l1_pts"].split("/")) == 16, "31 LFO points -> 16")
+    fx3 = [(o3("fx%d_type" % i), v3["fx%d_on" % i]) for i in range(1, 9)]
+    check(fx3 == [("Distortion", "1"), ("Distortion", "0"), ("Delay", "1"), ("Reverb", "1"), ("Flanger", "1"),
+                  ("Phaser", "1"), ("EQ", "1"), ("Filter", "1")]
+          and "effect Chorus (off in Serum): Philtre has 8 slots" in report,
+          "ten effects, three off: the seven on keep their slots, the first off one fills the eighth (%s)" % fx3)
     check(o3("l2_sync") == "Off" and near(v3["l2_rate"], si.lrate_x(1.0068), 0.01) and o3("l3_sync") == "1/1"
           and o3("l4_sync") == "1/4", "LFO rates: free 1 Hz stays 1 Hz, 1.627 synced is 1 bar, the default is 1/4 (%s %s %s)"
           % (v3["l2_rate"], o3("l3_sync"), o3("l4_sync")))
@@ -324,7 +337,7 @@ def main():
           "a bipolar 18.75 %% on CRS (128 semitones) sweeps 24 semitones: 50 %% of Philtre's +-24 (%s)" % v4["m1_amt"])
     check([o4("m%d_src" % i) for i in (2, 3, 4, 5)] == ["Env 2", "Env 2", "Env 2", "Off"]
           and all(near(v4["m%d_amt" % i], 40 * 128 / 24 / 3, 0.01) for i in (2, 3, 4)),
-          "an envelope at 40 %% of CRS (213 %% of Philtre's range) is spread over three slots")
+          "an envelope at 40 % of CRS (213 % of Philtre's range) is spread over three slots")
     check(v4["a_semi"] == "2" and near(v4["a_fine"], 25, 0.01), "CRS 2.25 -> +2 semitones 25 cents")
 
     # unknown --source name refused
